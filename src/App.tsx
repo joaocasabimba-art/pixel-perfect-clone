@@ -3,8 +3,11 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 import Login from "./pages/Login";
+import Registro from "./pages/Registro";
 import Dashboard from "./pages/Dashboard";
 import Leads from "./pages/Leads";
 import Agenda from "./pages/Agenda";
@@ -19,32 +22,42 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+function ProtectedLayout() {
+  return (
+    <ProtectedRoute>
+      <AppLayout />
+    </ProtectedRoute>
+  );
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/registro" element={<Login />} />
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/registro" element={<Registro />} />
 
-          <Route element={<AppLayout />}>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/leads" element={<Leads />} />
-            <Route path="/agenda" element={<Agenda />} />
-            <Route path="/ordens" element={<Ordens />} />
-            <Route path="/laudos" element={<Laudos />} />
-            <Route path="/clientes" element={<Clientes />} />
-            <Route path="/estoque" element={<Estoque />} />
-            <Route path="/recorrencias" element={<Recorrencias />} />
-            <Route path="/configuracoes" element={<Configuracoes />} />
-            <Route path="/mais" element={<Mais />} />
-          </Route>
+            <Route element={<ProtectedLayout />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/leads" element={<Leads />} />
+              <Route path="/agenda" element={<Agenda />} />
+              <Route path="/ordens" element={<Ordens />} />
+              <Route path="/laudos" element={<Laudos />} />
+              <Route path="/clientes" element={<Clientes />} />
+              <Route path="/estoque" element={<Estoque />} />
+              <Route path="/recorrencias" element={<Recorrencias />} />
+              <Route path="/configuracoes" element={<Configuracoes />} />
+              <Route path="/mais" element={<Mais />} />
+            </Route>
 
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

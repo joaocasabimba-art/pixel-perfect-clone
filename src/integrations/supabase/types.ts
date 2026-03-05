@@ -14,13 +14,433 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      clients: {
+        Row: {
+          address: string | null
+          city: string | null
+          company_id: string
+          created_at: string
+          document: string | null
+          email: string | null
+          id: string
+          lead_id: string | null
+          name: string
+          phone: string | null
+          state: string | null
+          tags: string[] | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          company_id: string
+          created_at?: string
+          document?: string | null
+          email?: string | null
+          id?: string
+          lead_id?: string | null
+          name: string
+          phone?: string | null
+          state?: string | null
+          tags?: string[] | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          company_id?: string
+          created_at?: string
+          document?: string | null
+          email?: string | null
+          id?: string
+          lead_id?: string | null
+          name?: string
+          phone?: string | null
+          state?: string | null
+          tags?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clients_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clients_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      companies: {
+        Row: {
+          address: string | null
+          cnpj: string | null
+          created_at: string
+          crq_crea: string | null
+          id: string
+          name: string
+          phone: string | null
+          responsible_tech: string | null
+        }
+        Insert: {
+          address?: string | null
+          cnpj?: string | null
+          created_at?: string
+          crq_crea?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          responsible_tech?: string | null
+        }
+        Update: {
+          address?: string | null
+          cnpj?: string | null
+          created_at?: string
+          crq_crea?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          responsible_tech?: string | null
+        }
+        Relationships: []
+      }
+      leads: {
+        Row: {
+          company_id: string
+          created_at: string
+          email: string | null
+          id: string
+          last_action: string | null
+          location: string | null
+          name: string
+          notes: string | null
+          origin: string | null
+          phone: string | null
+          service_type: string | null
+          status: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          last_action?: string | null
+          location?: string | null
+          name: string
+          notes?: string | null
+          origin?: string | null
+          phone?: string | null
+          service_type?: string | null
+          status?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          last_action?: string | null
+          location?: string | null
+          name?: string
+          notes?: string | null
+          origin?: string | null
+          phone?: string | null
+          service_type?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          category: string | null
+          company_id: string
+          cost: number | null
+          created_at: string
+          id: string
+          min_stock: number | null
+          name: string
+          stock: number
+          supplier: string | null
+          unit: string | null
+        }
+        Insert: {
+          category?: string | null
+          company_id: string
+          cost?: number | null
+          created_at?: string
+          id?: string
+          min_stock?: number | null
+          name: string
+          stock?: number
+          supplier?: string | null
+          unit?: string | null
+        }
+        Update: {
+          category?: string | null
+          company_id?: string
+          cost?: number | null
+          created_at?: string
+          id?: string
+          min_stock?: number | null
+          name?: string
+          stock?: number
+          supplier?: string | null
+          unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          full_name: string
+          id: string
+          phone: string | null
+          role: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          full_name?: string
+          id: string
+          phone?: string | null
+          role?: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          full_name?: string
+          id?: string
+          phone?: string | null
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recurrences: {
+        Row: {
+          client_id: string
+          company_id: string
+          created_at: string
+          id: string
+          interval_months: number
+          last_service_date: string | null
+          next_service_date: string | null
+          service_type: string
+        }
+        Insert: {
+          client_id: string
+          company_id: string
+          created_at?: string
+          id?: string
+          interval_months?: number
+          last_service_date?: string | null
+          next_service_date?: string | null
+          service_type: string
+        }
+        Update: {
+          client_id?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          interval_months?: number
+          last_service_date?: string | null
+          next_service_date?: string | null
+          service_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurrences_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurrences_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reports: {
+        Row: {
+          client_id: string | null
+          company_id: string
+          content: Json | null
+          created_at: string
+          id: string
+          service_id: string | null
+          status: string
+          tech_id: string | null
+          validity_date: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          company_id: string
+          content?: Json | null
+          created_at?: string
+          id?: string
+          service_id?: string | null
+          status?: string
+          tech_id?: string | null
+          validity_date?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          company_id?: string
+          content?: Json | null
+          created_at?: string
+          id?: string
+          service_id?: string | null
+          status?: string
+          tech_id?: string | null
+          validity_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_tech_id_fkey"
+            columns: ["tech_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      services: {
+        Row: {
+          address: string | null
+          assigned_to: string | null
+          client_id: string | null
+          company_id: string
+          created_at: string
+          end_time: string | null
+          id: string
+          lead_id: string | null
+          notes: string | null
+          scheduled_date: string | null
+          service_type: string
+          start_time: string | null
+          status: string
+          value: number | null
+        }
+        Insert: {
+          address?: string | null
+          assigned_to?: string | null
+          client_id?: string | null
+          company_id: string
+          created_at?: string
+          end_time?: string | null
+          id?: string
+          lead_id?: string | null
+          notes?: string | null
+          scheduled_date?: string | null
+          service_type: string
+          start_time?: string | null
+          status?: string
+          value?: number | null
+        }
+        Update: {
+          address?: string | null
+          assigned_to?: string | null
+          client_id?: string | null
+          company_id?: string
+          created_at?: string
+          end_time?: string | null
+          id?: string
+          lead_id?: string | null
+          notes?: string | null
+          scheduled_date?: string | null
+          service_type?: string
+          start_time?: string | null
+          status?: string
+          value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_company_id: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never

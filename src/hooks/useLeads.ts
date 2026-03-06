@@ -1,0 +1,61 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useCompanyId } from "@/hooks/useCompanyId";
+import { useToast } from "@/hooks/use-toast";
+import type { Lead, LeadStatus } from "@/lib/types";
+
+export function useLeads() {
+  const companyId = useCompanyId();
+  return useQuery({
+    queryKey: ["leads"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("leads")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as Lead[];
+    },
+    enabled: !!companyId,
+  });
+}
+
+export function useCreateLead() {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  const companyId = useCompanyId();
+  return useMutation({
+    mutationFn: async (lead: { name: string; phone?: string; origin?: string; service_type?: string; location?: string; notes?: string }) => {
+      const { data, error } = await supabase
+        .from("leads")
+        .insert({ ...lead, company_id: companyId! } as any)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["leads"] });
+      toast({ title: "Lead criado com sucesso!" });
+    },
+    onError: (err: any) =>
+      toast({ title: "Erro ao salvar lead", description: err.message, variant: "destructive" }),
+  });
+}
+
+export function useUpdateLeadStatus() {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: LeadStatus }) => {
+      const { error } = await supabase
+        .from("leads")
+        .update({ status, last_action: new Date().toISOString() })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["leads"] }),
+    onError: (err: any) =>
+      toast({ title: "Erro ao atualizar lead", description: err.message, variant: "destructive" }),
+  });
+}

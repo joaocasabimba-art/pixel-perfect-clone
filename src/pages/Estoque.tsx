@@ -3,9 +3,9 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useCompanyId } from "@/hooks/useCompanyId";
+import { useProducts } from "@/hooks/useProducts";
+import { EmptyState } from "@/components/EmptyState";
+import { formatCurrency } from "@/lib/business";
 
 const statusConfig = {
   critical: { label: "Crítico", class: "bg-danger-light text-danger" },
@@ -20,17 +20,7 @@ function getStockStatus(stock: number, minStock: number) {
 }
 
 export default function Estoque() {
-  const companyId = useCompanyId();
-
-  const { data: products, isLoading } = useQuery({
-    queryKey: ["products"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("products").select("*").order("name");
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!companyId,
-  });
+  const { data: products, isLoading } = useProducts();
 
   if (isLoading) {
     return (
@@ -46,7 +36,11 @@ export default function Estoque() {
       <h1 className="text-2xl font-bold text-foreground">Estoque</h1>
 
       {(!products || products.length === 0) ? (
-        <div className="text-center py-12 text-muted-foreground">Nenhum produto cadastrado ainda.</div>
+        <EmptyState
+          icon="📦"
+          title="Estoque não cadastrado"
+          description="Cadastre seus produtos para controlar o uso por serviço"
+        />
       ) : (
         <div className="space-y-3">
           {products.map((p: any) => {
@@ -71,7 +65,7 @@ export default function Estoque() {
                     </div>
                     <div className="text-right space-y-1">
                       <Badge className={`${st.class} border-0 text-xs`}>{st.label}</Badge>
-                      {p.cost > 0 && <p className="text-xs text-muted-foreground">R$ {Number(p.cost).toFixed(2).replace(".", ",")}/{p.unit}</p>}
+                      {p.cost > 0 && <p className="text-xs text-muted-foreground">{formatCurrency(Number(p.cost))}/{p.unit}</p>}
                     </div>
                   </div>
                 </CardContent>

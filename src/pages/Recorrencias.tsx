@@ -6,7 +6,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCompanyId } from "@/hooks/useCompanyId";
-import { format, startOfWeek, endOfWeek, addDays } from "date-fns";
+import { EmptyState } from "@/components/EmptyState";
+import { formatDateBR, recurrenceUrgency } from "@/lib/business";
+import { format, endOfWeek, addDays } from "date-fns";
 
 export default function Recorrencias() {
   const companyId = useCompanyId();
@@ -72,35 +74,47 @@ export default function Recorrencias() {
       </div>
 
       {recs.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">Nenhuma recorrência cadastrada.</div>
+        <EmptyState
+          icon="🔄"
+          title="Nenhuma recorrência cadastrada"
+          description="Recorrências são criadas ao concluir serviços com intervalo definido"
+        />
       ) : (
         <div className="space-y-3">
-          {recs.map((r: any) => (
-            <Card key={r.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <p className="font-semibold text-foreground">{r.client?.name || "—"}</p>
-                    <p className="text-sm text-muted-foreground">{r.service_type}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {r.last_service_date ? `Último: ${format(new Date(r.last_service_date), "dd/MM/yyyy")}` : ""}
-                      {r.next_service_date ? ` · Próximo: ${format(new Date(r.next_service_date), "dd/MM/yyyy")}` : ""}
-                    </p>
+          {recs.map((r: any) => {
+            const urgency = r.next_service_date ? recurrenceUrgency(r.next_service_date) : null;
+            return (
+              <Card key={r.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <p className="font-semibold text-foreground">{r.client?.name || "—"}</p>
+                      <p className="text-sm text-muted-foreground">{r.service_type}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {r.last_service_date ? `Último: ${formatDateBR(r.last_service_date)}` : ""}
+                        {r.next_service_date ? ` · Próximo: ${formatDateBR(r.next_service_date)}` : ""}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {urgency && (
+                        <Badge variant={urgency.color === "destructive" ? "destructive" : "outline"} className="text-xs">
+                          {urgency.label}
+                        </Badge>
+                      )}
+                      <Button variant="outline" size="sm" className="gap-1.5">
+                        <MessageCircle className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Contatar</span>
+                      </Button>
+                      <Button variant="outline" size="sm" className="gap-1.5">
+                        <Calendar className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Agendar</span>
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="gap-1.5">
-                      <MessageCircle className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Contatar</span>
-                    </Button>
-                    <Button variant="outline" size="sm" className="gap-1.5">
-                      <Calendar className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Agendar</span>
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>

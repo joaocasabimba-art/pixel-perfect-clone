@@ -2,9 +2,8 @@ import { Phone, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useCompanyId } from "@/hooks/useCompanyId";
+import { useClients } from "@/hooks/useClients";
+import { EmptyState } from "@/components/EmptyState";
 
 function Avatar({ name }: { name: string }) {
   const initials = name.split(" ").map((n) => n[0]).join("").slice(0, 2);
@@ -16,20 +15,7 @@ function Avatar({ name }: { name: string }) {
 }
 
 export default function Clientes() {
-  const companyId = useCompanyId();
-
-  const { data: clients, isLoading } = useQuery({
-    queryKey: ["clients"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("clients")
-        .select("*, services:services(count)")
-        .order("name");
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!companyId,
-  });
+  const { data: clients, isLoading } = useClients();
 
   if (isLoading) {
     return (
@@ -45,9 +31,11 @@ export default function Clientes() {
       <h1 className="text-2xl font-bold text-foreground">Clientes</h1>
 
       {(!clients || clients.length === 0) ? (
-        <div className="text-center py-12 text-muted-foreground">
-          Nenhum cliente cadastrado ainda.
-        </div>
+        <EmptyState
+          icon="👥"
+          title="Nenhum cliente cadastrado"
+          description="Clientes são criados automaticamente ao fechar um lead"
+        />
       ) : (
         <div className="space-y-3">
           {clients.map((c: any) => (

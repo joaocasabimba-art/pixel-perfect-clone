@@ -1,11 +1,10 @@
 import { Clock, MapPin, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useCompanyId } from "@/hooks/useCompanyId";
-import { format, startOfWeek, endOfWeek } from "date-fns";
+import { useWeekServices } from "@/hooks/useServices";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { EmptyState } from "@/components/EmptyState";
 
 const serviceColors: Record<string, string> = {
   "Dedetização": "border-l-primary-mid",
@@ -14,26 +13,8 @@ const serviceColors: Record<string, string> = {
 };
 
 export default function Agenda() {
-  const companyId = useCompanyId();
   const today = new Date();
-  const weekStart = format(startOfWeek(today, { weekStartsOn: 1 }), "yyyy-MM-dd");
-  const weekEnd = format(endOfWeek(today, { weekStartsOn: 1 }), "yyyy-MM-dd");
-
-  const { data: services, isLoading } = useQuery({
-    queryKey: ["agenda", weekStart],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("services")
-        .select("*, client:clients(name), tech:profiles!services_assigned_to_fkey(full_name)")
-        .gte("scheduled_date", weekStart)
-        .lte("scheduled_date", weekEnd)
-        .order("scheduled_date")
-        .order("start_time");
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!companyId,
-  });
+  const { data: services, isLoading } = useWeekServices();
 
   if (isLoading) {
     return (
@@ -61,9 +42,11 @@ export default function Agenda() {
       </div>
 
       {(!services || services.length === 0) ? (
-        <div className="text-center py-12 text-muted-foreground">
-          Nenhum serviço agendado nesta semana.
-        </div>
+        <EmptyState
+          icon="📅"
+          title="Sem serviços esta semana"
+          description="Agende um serviço a partir de um lead fechado"
+        />
       ) : (
         <div className="space-y-3">
           {services.map((item: any) => {

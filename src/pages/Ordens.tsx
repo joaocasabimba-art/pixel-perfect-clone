@@ -1,10 +1,9 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useCompanyId } from "@/hooks/useCompanyId";
-import { format } from "date-fns";
+import { useServices } from "@/hooks/useServices";
+import { EmptyState } from "@/components/EmptyState";
+import { formatDateBR, formatCurrency } from "@/lib/business";
 
 const statusBadge: Record<string, string> = {
   scheduled: "bg-primary-light text-primary-mid",
@@ -21,20 +20,7 @@ const statusLabel: Record<string, string> = {
 };
 
 export default function Ordens() {
-  const companyId = useCompanyId();
-
-  const { data: orders, isLoading } = useQuery({
-    queryKey: ["orders"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("services")
-        .select("*, client:clients(name), tech:profiles!services_assigned_to_fkey(full_name)")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!companyId,
-  });
+  const { data: orders, isLoading } = useServices();
 
   if (isLoading) {
     return (
@@ -50,7 +36,11 @@ export default function Ordens() {
       <h1 className="text-2xl font-bold text-foreground">Ordens de Serviço</h1>
 
       {(!orders || orders.length === 0) ? (
-        <div className="text-center py-12 text-muted-foreground">Nenhuma ordem de serviço ainda.</div>
+        <EmptyState
+          icon="📋"
+          title="Nenhuma ordem de serviço"
+          description="Ordens são criadas ao agendar serviços a partir de leads fechados"
+        />
       ) : (
         <div className="space-y-3">
           {orders.map((os: any, index: number) => (
@@ -64,9 +54,9 @@ export default function Ordens() {
                     </div>
                     <p className="font-semibold text-foreground">{os.client?.name || "—"}</p>
                     <p className="text-sm text-muted-foreground">{os.service_type}{os.tech?.full_name ? ` · Téc: ${os.tech.full_name}` : ""}</p>
-                    {os.scheduled_date && <p className="text-xs text-muted-foreground">{format(new Date(os.scheduled_date), "dd/MM/yyyy")}</p>}
+                    {os.scheduled_date && <p className="text-xs text-muted-foreground">{formatDateBR(os.scheduled_date)}</p>}
                   </div>
-                  {os.value > 0 && <span className="text-sm font-semibold text-foreground">R$ {Number(os.value).toFixed(2).replace(".", ",")}</span>}
+                  {os.value > 0 && <span className="text-sm font-semibold text-foreground">{formatCurrency(Number(os.value))}</span>}
                 </div>
               </CardContent>
             </Card>

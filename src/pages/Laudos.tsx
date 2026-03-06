@@ -5,7 +5,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCompanyId } from "@/hooks/useCompanyId";
-import { format } from "date-fns";
+import { EmptyState } from "@/components/EmptyState";
+import { formatDateBR } from "@/lib/business";
 
 const statusBadge: Record<string, string> = {
   draft: "bg-warning-light text-warning",
@@ -44,7 +45,11 @@ export default function Laudos() {
       <h1 className="text-2xl font-bold text-foreground">Laudos</h1>
 
       {(!reports || reports.length === 0) ? (
-        <div className="text-center py-12 text-muted-foreground">Nenhum laudo cadastrado ainda.</div>
+        <EmptyState
+          icon="📄"
+          title="Nenhum laudo cadastrado"
+          description="Laudos são gerados a partir de ordens de serviço concluídas"
+        />
       ) : (
         <div className="space-y-3">
           {reports.map((l: any) => (
@@ -57,9 +62,9 @@ export default function Laudos() {
                     </div>
                     <div className="space-y-1">
                       <p className="font-semibold text-foreground">{l.client?.name || "—"}</p>
-                      <p className="text-sm text-muted-foreground">{l.service?.service_type || "—"} · {format(new Date(l.created_at), "dd/MM/yyyy")}</p>
+                      <p className="text-sm text-muted-foreground">{l.service?.service_type || "—"} · {formatDateBR(l.created_at)}</p>
                       {l.tech?.full_name && <p className="text-xs text-muted-foreground">Téc: {l.tech.full_name}</p>}
-                      {l.validity_date && <p className="text-xs text-muted-foreground">Validade: {format(new Date(l.validity_date), "dd/MM/yyyy")}</p>}
+                      {l.validity_date && <p className="text-xs text-muted-foreground">Validade: {formatDateBR(l.validity_date)}</p>}
                     </div>
                   </div>
                   <Badge className={`${statusBadge[l.status] || ""} border-0 text-xs`}>{statusLabel[l.status] || l.status}</Badge>

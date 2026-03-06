@@ -25,34 +25,51 @@ export default function Registro() {
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
-      // 1. Sign up
+      // 1. Sign up - store company info in user metadata for post-confirmation setup
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { full_name: fullName } },
+        options: {
+          data: {
+            full_name: fullName,
+            company_name: companyName,
+            cnpj: cnpj || null,
+            phone: phone || null,
+          },
+          emailRedirectTo: window.location.origin + "/dashboard",
+        },
       });
       if (authError) throw authError;
 
       const userId = authData.user?.id;
       if (!userId) throw new Error("Falha ao criar usuário");
 
-      // 2. Create company
-      const { data: company, error: companyError } = await supabase
-        .from("companies")
-        .insert({ name: companyName, cnpj: cnpj || null, phone: phone || null })
-        .select("id")
-        .single();
-      if (companyError) throw companyError;
+      // Check if session was established (email confirmation disabled)
+      if (authData.session) {
+        // Session exists - create company and update profile now
+        const { data: company, error: companyError } = await supabase
+          .from("companies")
+          .insert({ name: companyName, cnpj: cnpj || null, phone: phone || null })
+          .select("id")
+          .single();
+        if (companyError) throw companyError;
 
-      // 3. Update profile with company_id
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .update({ company_id: company.id, full_name: fullName, phone: phone || null })
-        .eq("id", userId);
-      if (profileError) throw profileError;
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .update({ company_id: company.id, full_name: fullName, phone: phone || null })
+          .eq("id", userId);
+        if (profileError) throw profileError;
 
-      toast({ title: "Conta criada!", description: "Bem-vindo ao PragaZero." });
-      navigate("/dashboard");
+        toast({ title: "Conta criada!", description: "Bem-vindo ao PragaZero." });
+        navigate("/dashboard");
+      } else {
+        // Email confirmation required
+        toast({
+          title: "Verifique seu e-mail",
+          description: "Enviamos um link de confirmação para " + email + ". Clique nele para ativar sua conta.",
+        });
+        navigate("/login");
+      }
     } catch (err: any) {
       toast({ title: "Erro ao criar conta", description: err.message, variant: "destructive" });
     } finally {

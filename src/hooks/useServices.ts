@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCompanyId } from "@/hooks/useCompanyId";
 import { useToast } from "@/hooks/use-toast";
+import { friendlyError } from "@/lib/errorHandler";
 import { format, startOfWeek, endOfWeek } from "date-fns";
 
 export function useServices() {
@@ -62,6 +63,6 @@ export function useCreateService() {
       toast({ title: "Serviço criado com sucesso!" });
     },
     onError: (err: any) =>
-      toast({ title: "Erro ao criar serviço", description: err.message, variant: "destructive" }),
+      toast({ title: "Erro ao criar serviço", description: friendlyError(err), variant: "destructive" }),
   });
 }

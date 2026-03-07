@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCompanyId } from "@/hooks/useCompanyId";
 import { useToast } from "@/hooks/use-toast";
+import { friendlyError } from "@/lib/errorHandler";
 
 export function useProducts() {
   const companyId = useCompanyId();
@@ -35,6 +36,6 @@ export function useCreateProduct() {
       toast({ title: "Produto criado com sucesso!" });
     },
     onError: (err: any) =>
-      toast({ title: "Erro ao criar produto", description: err.message, variant: "destructive" }),
+      toast({ title: "Erro ao criar produto", description: friendlyError(err), variant: "destructive" }),
   });
 }

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCompanyId } from "@/hooks/useCompanyId";
 import { useToast } from "@/hooks/use-toast";
+import { friendlyError } from "@/lib/errorHandler";
 import type { Lead, LeadStatus } from "@/lib/types";
 
 export function useLeads() {
@@ -39,7 +40,7 @@ export function useCreateLead() {
       toast({ title: "Lead criado com sucesso!" });
     },
     onError: (err: any) =>
-      toast({ title: "Erro ao salvar lead", description: err.message, variant: "destructive" }),
+      toast({ title: "Erro ao salvar lead", description: friendlyError(err), variant: "destructive" }),
   });
 }
 
@@ -56,6 +57,6 @@ export function useUpdateLeadStatus() {
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["leads"] }),
     onError: (err: any) =>
-      toast({ title: "Erro ao atualizar lead", description: err.message, variant: "destructive" }),
+      toast({ title: "Erro ao atualizar lead", description: friendlyError(err), variant: "destructive" }),
   });
 }

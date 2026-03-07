@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCompanyId } from "@/hooks/useCompanyId";
 import { EmptyState } from "@/components/EmptyState";
 import { formatDateBR } from "@/lib/business";
+import { useNavigate } from "react-router-dom";
 
 const statusBadge: Record<string, string> = {
   draft: "bg-warning-light text-warning",
@@ -17,6 +18,7 @@ const statusLabel: Record<string, string> = { draft: "Rascunho", signed: "Assina
 
 export default function Laudos() {
   const companyId = useCompanyId();
+  const navigate = useNavigate();
 
   const { data: reports, isLoading } = useQuery({
     queryKey: ["reports"],
@@ -53,7 +55,7 @@ export default function Laudos() {
       ) : (
         <div className="space-y-3">
           {reports.map((l: any) => (
-            <Card key={l.id} className="hover:shadow-md transition-shadow cursor-pointer">
+            <Card key={l.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/laudos/${l.id}`)}>
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-3">

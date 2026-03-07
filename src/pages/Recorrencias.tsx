@@ -1,29 +1,45 @@
-import { RotateCcw, MessageCircle, Calendar } from "lucide-react";
+import { useState } from "react";
+import { RotateCcw, MessageCircle, Calendar, Copy, ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCompanyId } from "@/hooks/useCompanyId";
+import { useAuth } from "@/contexts/AuthContext";
 import { EmptyState } from "@/components/EmptyState";
-import { formatDateBR, recurrenceUrgency } from "@/lib/business";
+import { formatDateBR, recurrenceUrgency, recurrenceMessage, whatsappLink } from "@/lib/business";
+import { useToast } from "@/hooks/use-toast";
 import { format, endOfWeek, addDays } from "date-fns";
 
 export default function Recorrencias() {
   const companyId = useCompanyId();
+  const { toast } = useToast();
+  const { profile, company } = useAuth() as any;
   const today = new Date();
   const weekEnd = format(endOfWeek(today, { weekStartsOn: 1 }), "yyyy-MM-dd");
   const fifteenDays = format(addDays(today, 15), "yyyy-MM-dd");
   const thirtyDays = format(addDays(today, 30), "yyyy-MM-dd");
   const todayStr = format(today, "yyyy-MM-dd");
 
+  const [contactOpen, setContactOpen] = useState(false);
+  const [contactMsg, setContactMsg] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+
   const { data, isLoading } = useQuery({
     queryKey: ["recurrences"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("recurrences")
-        .select("*, client:clients(name)")
+        .select("*, client:clients(name, phone)")
         .order("next_service_date");
       if (error) throw error;
       return data;
@@ -54,6 +70,30 @@ export default function Recorrencias() {
     { label: "15 dias", count: within15.length, class: "bg-primary-light text-primary-mid" },
     { label: "30 dias", count: within30.length, class: "bg-muted text-muted-foreground" },
   ];
+
+  const handleContact = (rec: any) => {
+    const clientName = rec.client?.name || "Cliente";
+    const phone = rec.client?.phone || "";
+    const companyName = company?.name || "PragaZero";
+    const companyPhone = company?.phone || "";
+    const msg = recurrenceMessage(clientName, rec.service_type, companyName, companyPhone);
+    setContactMsg(msg);
+    setContactPhone(phone);
+    setContactOpen(true);
+  };
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(contactMsg);
+    toast({ title: "Mensagem copiada!" });
+  };
+
+  const handleOpenWhatsApp = () => {
+    if (!contactPhone) {
+      toast({ title: "Cliente sem telefone cadastrado", variant: "destructive" });
+      return;
+    }
+    window.open(whatsappLink(contactPhone, contactMsg), "_blank");
+  };
 
   return (
     <div className="space-y-6">
@@ -101,7 +141,7 @@ export default function Recorrencias() {
                           {urgency.label}
                         </Badge>
                       )}
-                      <Button variant="outline" size="sm" className="gap-1.5">
+                      <Button variant="outline" size="sm" className="gap-1.5" onClick={() => handleContact(r)}>
                         <MessageCircle className="w-3.5 h-3.5" />
                         <span className="hidden sm:inline">Contatar</span>
                       </Button>
@@ -117,6 +157,26 @@ export default function Recorrencias() {
           })}
         </div>
       )}
+
+      <Dialog open={contactOpen} onOpenChange={setContactOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Mensagem de Recorrência</DialogTitle>
+            <DialogDescription>Envie por WhatsApp ou copie a mensagem abaixo.</DialogDescription>
+          </DialogHeader>
+          <div className="bg-muted rounded-lg p-4 text-sm whitespace-pre-wrap text-foreground">
+            {contactMsg}
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button variant="outline" onClick={handleCopy} className="gap-1.5">
+              <Copy className="w-4 h-4" /> Copiar
+            </Button>
+            <Button onClick={handleOpenWhatsApp} className="gap-1.5">
+              <ExternalLink className="w-4 h-4" /> Abrir WhatsApp
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

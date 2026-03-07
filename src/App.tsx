@@ -13,6 +13,7 @@ import Leads from "./pages/Leads";
 import Agenda from "./pages/Agenda";
 import Ordens from "./pages/Ordens";
 import Laudos from "./pages/Laudos";
+import LaudoDetalhe from "./pages/LaudoDetalhe";
 import Clientes from "./pages/Clientes";
 import Estoque from "./pages/Estoque";
 import Recorrencias from "./pages/Recorrencias";
@@ -48,6 +49,7 @@ const App = () => (
               <Route path="/agenda" element={<Agenda />} />
               <Route path="/ordens" element={<Ordens />} />
               <Route path="/laudos" element={<Laudos />} />
+              <Route path="/laudos/:id" element={<LaudoDetalhe />} />
               <Route path="/clientes" element={<Clientes />} />
               <Route path="/estoque" element={<Estoque />} />
               <Route path="/recorrencias" element={<Recorrencias />} />

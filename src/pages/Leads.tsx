@@ -1,49 +1,31 @@
-import { Plus, Phone, MapPin, GripVertical } from "lucide-react";
+import { useState } from "react";
+import { Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useLeads, useCreateLead, useUpdateLeadStatus } from "@/hooks/useLeads";
-import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { formatDistanceToNow } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { formatPhone } from "@/lib/business";
+import { useLeads, useUpdateLeadStatus } from "@/hooks/useLeads";
 import { EmptyState } from "@/components/EmptyState";
+import { LeadCard } from "@/components/leads/LeadCard";
+import { KanbanColumn } from "@/components/leads/KanbanColumn";
+import { LeadFormModal } from "@/components/leads/LeadFormModal";
+import { LeadDetailSheet } from "@/components/leads/LeadDetailSheet";
+import { ConvertLeadModal } from "@/components/leads/ConvertLeadModal";
+import { LostReasonModal } from "@/components/leads/LostReasonModal";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type { Lead, LeadStatus } from "@/lib/types";
 import {
   DndContext,
   DragOverlay,
   closestCorners,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   type DragStartEvent,
   type DragEndEvent,
 } from "@dnd-kit/core";
-import { useDroppable } from "@dnd-kit/core";
 
-const columns: { key: LeadStatus; label: string; badgeClass: string }[] = [
+const COLUMNS: { key: LeadStatus; label: string; badgeClass: string }[] = [
   { key: "new", label: "Novo", badgeClass: "bg-primary-light text-primary-mid" },
   { key: "quoted", label: "Orçado", badgeClass: "bg-warning-light text-warning" },
   { key: "negotiating", label: "Negociando", badgeClass: "bg-accent text-accent-foreground" },
@@ -51,73 +33,51 @@ const columns: { key: LeadStatus; label: string; badgeClass: string }[] = [
   { key: "lost", label: "Perdido", badgeClass: "bg-danger-light text-danger" },
 ];
 
-function DroppableColumn({ id, children }: { id: string; children: React.ReactNode }) {
-  const { setNodeRef, isOver } = useDroppable({ id });
-  return (
-    <div
-      ref={setNodeRef}
-      className={`min-w-[260px] flex-shrink-0 transition-colors rounded-lg ${isOver ? "bg-muted/50" : ""}`}
-    >
-      {children}
-    </div>
-  );
-}
-
-function LeadCard({ lead, onClick, isDragging }: { lead: Lead; onClick?: () => void; isDragging?: boolean }) {
-  return (
-    <div
-      onClick={onClick}
-      className={`bg-card border border-border rounded-lg p-3 space-y-2 hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing ${isDragging ? "opacity-50 shadow-lg ring-2 ring-primary-mid" : ""}`}
-    >
-      <div className="flex items-start justify-between">
-        <p className="font-semibold text-sm text-foreground">{lead.name}</p>
-        <GripVertical className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-      </div>
-      {lead.phone && (
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Phone className="w-3 h-3" />{lead.phone}
-        </div>
-      )}
-      {lead.service_type && <p className="text-xs text-muted-foreground">{lead.service_type}</p>}
-      {lead.location && (
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <MapPin className="w-3 h-3" />{lead.location}
-        </div>
-      )}
-      <div className="border-t border-border pt-2 mt-2">
-        <div className="flex items-center justify-between">
-          {lead.origin && <span className="text-xs text-muted-foreground">Origem: {lead.origin}</span>}
-          <span className="text-xs text-muted-foreground">
-            {formatDistanceToNow(new Date(lead.created_at), { addSuffix: true, locale: ptBR })}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function Leads() {
   const { data: leads, isLoading } = useLeads();
-  const createLead = useCreateLead();
   const updateStatus = useUpdateLeadStatus();
+  const isMobile = useIsMobile();
+
   const [newLeadOpen, setNewLeadOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
 
-  // Form state
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [origin, setOrigin] = useState("WhatsApp");
-  const [serviceType, setServiceType] = useState("");
-  const [location, setLocation] = useState("");
-  const [notes, setNotes] = useState("");
+  // Convert modal
+  const [convertLead, setConvertLead] = useState<Lead | null>(null);
+  const [convertOpen, setConvertOpen] = useState(false);
+
+  // Lost modal
+  const [lostLead, setLostLead] = useState<Lead | null>(null);
+  const [lostOpen, setLostOpen] = useState(false);
+
+  // Mobile: column selector
+  const [mobileColumn, setMobileColumn] = useState<LeadStatus>("new");
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } })
   );
 
-  const leadsByStatus = (status: LeadStatus) => leads?.filter((l) => l.status === status) ?? [];
+  const leadsByStatus = (status: LeadStatus) =>
+    leads?.filter((l) => l.status === status) ?? [];
+
   const activeLead = activeId ? leads?.find((l) => l.id === activeId) : null;
+
+  function handleStatusChange(lead: Lead, newStatus: LeadStatus) {
+    if (newStatus === "won") {
+      setConvertLead(lead);
+      setConvertOpen(true);
+      // Also update status
+      updateStatus.mutate({ id: lead.id, status: "won" });
+      return;
+    }
+    if (newStatus === "lost") {
+      setLostLead(lead);
+      setLostOpen(true);
+      return;
+    }
+    updateStatus.mutate({ id: lead.id, status: newStatus });
+  }
 
   function handleDragStart(event: DragStartEvent) {
     setActiveId(event.active.id as string);
@@ -127,22 +87,23 @@ export default function Leads() {
     const { active, over } = event;
     setActiveId(null);
     if (!over) return;
-    const newStatus = over.id as LeadStatus;
+
+    const columnKeys = COLUMNS.map((c) => c.key) as string[];
+    const targetStatus = columnKeys.includes(over.id as string)
+      ? (over.id as LeadStatus)
+      : leads?.find((l) => l.id === over.id)?.status as LeadStatus | undefined;
+
+    if (!targetStatus) return;
     const lead = leads?.find((l) => l.id === active.id);
-    if (lead && lead.status !== newStatus) {
-      updateStatus.mutate({ id: lead.id, status: newStatus });
-    }
+    if (!lead || lead.status === targetStatus) return;
+
+    handleStatusChange(lead, targetStatus);
   }
 
-  function handleSubmit() {
-    createLead.mutate(
-      { name, phone: phone || undefined, origin, service_type: serviceType || undefined, location: location || undefined, notes: notes || undefined },
-      {
-        onSuccess: () => {
-          setNewLeadOpen(false);
-          setName(""); setPhone(""); setOrigin("WhatsApp"); setServiceType(""); setLocation(""); setNotes("");
-        },
-      }
+  function handleLostConfirm(leadId: string, reason: string) {
+    updateStatus.mutate(
+      { id: leadId, status: "lost", lost_reason: reason || undefined },
+      { onSuccess: () => setLostOpen(false) }
     );
   }
 
@@ -150,12 +111,12 @@ export default function Leads() {
     return (
       <div className="space-y-4">
         <Skeleton className="h-8 w-32" />
-        <div className="flex gap-4">
-          {columns.map((c) => (
+        <div className="flex gap-4 overflow-hidden">
+          {COLUMNS.map((c) => (
             <div key={c.key} className="min-w-[260px] space-y-3">
               <Skeleton className="h-6 w-20" />
-              <Skeleton className="h-32 w-full" />
-              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-32 w-full rounded-lg" />
+              <Skeleton className="h-32 w-full rounded-lg" />
             </div>
           ))}
         </div>
@@ -178,7 +139,58 @@ export default function Leads() {
           description="Adicione seu primeiro lead ou aguarde contatos chegarem"
           action={{ label: "Novo Lead", onClick: () => setNewLeadOpen(true) }}
         />
+      ) : isMobile ? (
+        /* Mobile: column tabs + vertical list */
+        <div className="space-y-4">
+          <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4">
+            {COLUMNS.map((col) => {
+              const count = leadsByStatus(col.key).length;
+              const isActive = mobileColumn === col.key;
+              return (
+                <button
+                  key={col.key}
+                  onClick={() => setMobileColumn(col.key)}
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                    isActive
+                      ? `${col.badgeClass}`
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {col.label} ({count})
+                </button>
+              );
+            })}
+          </div>
+          <div className="space-y-3">
+            {leadsByStatus(mobileColumn).map((lead) => (
+              <div
+                key={lead.id}
+                onClick={() => setSelectedLead(lead)}
+                className="bg-card border border-border rounded-lg p-3 space-y-2 cursor-pointer hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-start justify-between">
+                  <p className="font-semibold text-sm text-foreground">{lead.name}</p>
+                  {lead.origin && (
+                    <span className="text-xs text-muted-foreground">{lead.origin}</span>
+                  )}
+                </div>
+                {lead.phone && (
+                  <p className="text-xs text-muted-foreground">{lead.phone}</p>
+                )}
+                {lead.service_type && (
+                  <p className="text-xs text-muted-foreground">{lead.service_type}</p>
+                )}
+              </div>
+            ))}
+            {leadsByStatus(mobileColumn).length === 0 && (
+              <p className="text-center py-8 text-muted-foreground text-sm">
+                Nenhum lead nesta coluna
+              </p>
+            )}
+          </div>
+        </div>
       ) : (
+        /* Desktop: drag-and-drop Kanban */
         <DndContext
           sensors={sensors}
           collisionDetection={closestCorners}
@@ -186,172 +198,56 @@ export default function Leads() {
           onDragEnd={handleDragEnd}
         >
           <div className="flex gap-4 overflow-x-auto pb-4">
-            {columns.map((col) => {
-              const colLeads = leadsByStatus(col.key);
-              return (
-                <DroppableColumn key={col.key} id={col.key}>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <Badge className={`${col.badgeClass} border-0 text-xs font-semibold`}>{col.label}</Badge>
-                      <span className="text-xs text-muted-foreground font-medium">{colLeads.length}</span>
-                    </div>
-                  </div>
-                  <div className="space-y-3 min-h-[100px]">
-                    {colLeads.map((lead) => (
-                      <div
-                        key={lead.id}
-                        data-id={lead.id}
-                        draggable
-                        onDragStart={() => setActiveId(lead.id)}
-                      >
-                        <LeadCard
-                          lead={lead}
-                          onClick={() => setSelectedLead(lead)}
-                          isDragging={activeId === lead.id}
-                        />
-                      </div>
-                    ))}
-                    {colLeads.length === 0 && (
-                      <div className="text-center py-8 text-muted-foreground text-sm border border-dashed border-border rounded-lg">
-                        Arraste leads aqui
-                      </div>
-                    )}
-                  </div>
-                </DroppableColumn>
-              );
-            })}
+            {COLUMNS.map((col) => (
+              <KanbanColumn
+                key={col.key}
+                column={col}
+                leads={leadsByStatus(col.key)}
+                onCardClick={(lead) => setSelectedLead(lead)}
+              />
+            ))}
           </div>
-
           <DragOverlay>
-            {activeLead ? <LeadCard lead={activeLead} /> : null}
+            {activeLead ? <LeadCard lead={activeLead} overlay /> : null}
           </DragOverlay>
         </DndContext>
       )}
 
-      {/* New Lead Dialog */}
-      <Dialog open={newLeadOpen} onOpenChange={setNewLeadOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Novo Lead</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Nome *</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome do lead" />
-            </div>
-            <div className="space-y-2">
-              <Label>Telefone</Label>
-              <Input
-                value={phone}
-                onChange={(e) => setPhone(formatPhone(e.target.value))}
-                placeholder="(11) 99999-9999"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Origem</Label>
-              <Select value={origin} onValueChange={setOrigin}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="WhatsApp">WhatsApp</SelectItem>
-                  <SelectItem value="Instagram">Instagram</SelectItem>
-                  <SelectItem value="Google">Google</SelectItem>
-                  <SelectItem value="Indicação">Indicação</SelectItem>
-                  <SelectItem value="Outro">Outro</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Tipo de serviço</Label>
-              <Input value={serviceType} onChange={(e) => setServiceType(e.target.value)} placeholder="Ex: Dedetização" />
-            </div>
-            <div className="space-y-2">
-              <Label>Localização</Label>
-              <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Cidade - UF" />
-            </div>
-            <div className="space-y-2">
-              <Label>Observações</Label>
-              <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Detalhes do lead" />
-            </div>
-            <Button
-              className="w-full bg-primary-mid hover:bg-primary-mid/90 text-primary-mid-foreground"
-              onClick={handleSubmit}
-              disabled={!name || createLead.isPending}
-            >
-              {createLead.isPending ? "Criando..." : "Criar Lead"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Lead form */}
+      <LeadFormModal open={newLeadOpen} onOpenChange={setNewLeadOpen} />
 
-      {/* Lead Detail Sheet */}
-      <Sheet open={!!selectedLead} onOpenChange={(open) => !open && setSelectedLead(null)}>
-        <SheetContent>
-          <SheetHeader>
-            <SheetTitle>{selectedLead?.name}</SheetTitle>
-          </SheetHeader>
-          {selectedLead && (
-            <div className="space-y-4 mt-4">
-              {selectedLead.phone && (
-                <div>
-                  <p className="text-xs text-muted-foreground">Telefone</p>
-                  <p className="text-sm font-medium text-foreground">{selectedLead.phone}</p>
-                </div>
-              )}
-              {selectedLead.email && (
-                <div>
-                  <p className="text-xs text-muted-foreground">E-mail</p>
-                  <p className="text-sm font-medium text-foreground">{selectedLead.email}</p>
-                </div>
-              )}
-              {selectedLead.service_type && (
-                <div>
-                  <p className="text-xs text-muted-foreground">Serviço</p>
-                  <p className="text-sm font-medium text-foreground">{selectedLead.service_type}</p>
-                </div>
-              )}
-              {selectedLead.location && (
-                <div>
-                  <p className="text-xs text-muted-foreground">Localização</p>
-                  <p className="text-sm font-medium text-foreground">{selectedLead.location}</p>
-                </div>
-              )}
-              {selectedLead.origin && (
-                <div>
-                  <p className="text-xs text-muted-foreground">Origem</p>
-                  <p className="text-sm font-medium text-foreground">{selectedLead.origin}</p>
-                </div>
-              )}
-              {selectedLead.notes && (
-                <div>
-                  <p className="text-xs text-muted-foreground">Observações</p>
-                  <p className="text-sm text-foreground">{selectedLead.notes}</p>
-                </div>
-              )}
-              <div>
-                <p className="text-xs text-muted-foreground mb-2">Mover para</p>
-                <div className="flex flex-wrap gap-2">
-                  {columns
-                    .filter((c) => c.key !== selectedLead.status)
-                    .map((c) => (
-                      <Button
-                        key={c.key}
-                        variant="outline"
-                        size="sm"
-                        className="text-xs"
-                        onClick={() => {
-                          updateStatus.mutate({ id: selectedLead.id, status: c.key });
-                          setSelectedLead({ ...selectedLead, status: c.key });
-                        }}
-                      >
-                        {c.label}
-                      </Button>
-                    ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </SheetContent>
-      </Sheet>
+      {/* Lead detail */}
+      <LeadDetailSheet
+        lead={selectedLead}
+        open={!!selectedLead}
+        onOpenChange={(open) => !open && setSelectedLead(null)}
+        onStatusChange={(lead, status) => {
+          setSelectedLead(null);
+          handleStatusChange(lead, status);
+        }}
+      />
+
+      {/* Convert to client */}
+      <ConvertLeadModal
+        lead={convertLead}
+        open={convertOpen}
+        onOpenChange={(open) => {
+          setConvertOpen(open);
+          if (!open) setConvertLead(null);
+        }}
+      />
+
+      {/* Lost reason */}
+      <LostReasonModal
+        lead={lostLead}
+        open={lostOpen}
+        onOpenChange={(open) => {
+          setLostOpen(open);
+          if (!open) setLostLead(null);
+        }}
+        onConfirm={handleLostConfirm}
+        isPending={updateStatus.isPending}
+      />
 
       {/* FAB */}
       <Button

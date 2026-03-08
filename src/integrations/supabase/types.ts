@@ -109,6 +109,8 @@ export type Database = {
       }
       leads: {
         Row: {
+          address: Json | null
+          client_id: string | null
           company_id: string
           created_at: string
           email: string | null
@@ -119,10 +121,13 @@ export type Database = {
           notes: string | null
           origin: string | null
           phone: string | null
+          quote_value: number | null
           service_type: string | null
           status: string
         }
         Insert: {
+          address?: Json | null
+          client_id?: string | null
           company_id: string
           created_at?: string
           email?: string | null
@@ -133,10 +138,13 @@ export type Database = {
           notes?: string | null
           origin?: string | null
           phone?: string | null
+          quote_value?: number | null
           service_type?: string | null
           status?: string
         }
         Update: {
+          address?: Json | null
+          client_id?: string | null
           company_id?: string
           created_at?: string
           email?: string | null
@@ -147,10 +155,18 @@ export type Database = {
           notes?: string | null
           origin?: string | null
           phone?: string | null
+          quote_value?: number | null
           service_type?: string | null
           status?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "leads_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "leads_company_id_fkey"
             columns: ["company_id"]

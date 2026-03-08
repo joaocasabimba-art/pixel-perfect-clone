@@ -26,7 +26,17 @@ export function useCreateLead() {
   const { toast } = useToast();
   const companyId = useCompanyId();
   return useMutation({
-    mutationFn: async (lead: { name: string; phone?: string; origin?: string; service_type?: string; location?: string; notes?: string }) => {
+    mutationFn: async (lead: {
+      name: string;
+      phone?: string;
+      email?: string;
+      origin?: string;
+      service_type?: string;
+      location?: string;
+      notes?: string;
+      quote_value?: number;
+      address?: Record<string, string | undefined>;
+    }) => {
       const { data, error } = await supabase
         .from("leads")
         .insert({ ...lead, company_id: companyId! } as any)
@@ -48,10 +58,39 @@ export function useUpdateLeadStatus() {
   const qc = useQueryClient();
   const { toast } = useToast();
   return useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: LeadStatus }) => {
+    mutationFn: async ({
+      id,
+      status,
+      lost_reason,
+      client_id,
+    }: {
+      id: string;
+      status: LeadStatus;
+      lost_reason?: string;
+      client_id?: string;
+    }) => {
+      const update: Record<string, any> = {
+        status,
+        last_action: new Date().toISOString(),
+      };
+      if (lost_reason !== undefined) {
+        // Append lost reason to notes
+        const { data: existing } = await supabase
+          .from("leads")
+          .select("notes")
+          .eq("id", id)
+          .single();
+        const existingNotes = existing?.notes || "";
+        update.notes = existingNotes
+          ? `${existingNotes}\n[Motivo da perda]: ${lost_reason}`
+          : `[Motivo da perda]: ${lost_reason}`;
+      }
+      if (client_id) {
+        update.client_id = client_id;
+      }
       const { error } = await supabase
         .from("leads")
-        .update({ status, last_action: new Date().toISOString() })
+        .update(update as any)
         .eq("id", id);
       if (error) throw error;
     },

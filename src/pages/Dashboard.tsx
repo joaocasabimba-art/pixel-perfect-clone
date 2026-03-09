@@ -14,6 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { formatCurrency, whatsappLink } from "@/lib/business";
 import { format, startOfMonth, endOfMonth, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { OnboardingChecklist } from "@/components/OnboardingChecklist";
 
 export default function Dashboard() {
   const companyId = useCompanyId();
@@ -154,6 +155,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+      <OnboardingChecklist />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {metricCards.map((m) => (

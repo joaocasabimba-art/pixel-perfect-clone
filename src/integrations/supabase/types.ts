@@ -87,6 +87,7 @@ export type Database = {
           name: string
           phone: string | null
           responsible_tech: string | null
+          settings: Json | null
         }
         Insert: {
           address?: string | null
@@ -97,6 +98,7 @@ export type Database = {
           name: string
           phone?: string | null
           responsible_tech?: string | null
+          settings?: Json | null
         }
         Update: {
           address?: string | null
@@ -107,6 +109,7 @@ export type Database = {
           name?: string
           phone?: string | null
           responsible_tech?: string | null
+          settings?: Json | null
         }
         Relationships: []
       }

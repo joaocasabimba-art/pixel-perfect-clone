@@ -17,6 +17,7 @@ function Avatar({ name }: { name: string }) {
 
 export default function Clientes() {
   const { data: clients, isLoading } = useClients();
+  const navigate = useNavigate();
 
   if (isLoading) {
     return (

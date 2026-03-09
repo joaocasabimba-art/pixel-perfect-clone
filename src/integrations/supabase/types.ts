@@ -25,6 +25,7 @@ export type Database = {
           id: string
           lead_id: string | null
           name: string
+          notes: Json | null
           phone: string | null
           state: string | null
           tags: string[] | null
@@ -39,6 +40,7 @@ export type Database = {
           id?: string
           lead_id?: string | null
           name: string
+          notes?: Json | null
           phone?: string | null
           state?: string | null
           tags?: string[] | null
@@ -53,6 +55,7 @@ export type Database = {
           id?: string
           lead_id?: string | null
           name?: string
+          notes?: Json | null
           phone?: string | null
           state?: string | null
           tags?: string[] | null
@@ -313,7 +316,11 @@ export type Database = {
           content: Json | null
           created_at: string
           id: string
+          responsible_tech: string | null
+          rt_registry: string | null
+          sent_at: string | null
           service_id: string | null
+          signed_at: string | null
           status: string
           tech_id: string | null
           validity_date: string | null
@@ -324,7 +331,11 @@ export type Database = {
           content?: Json | null
           created_at?: string
           id?: string
+          responsible_tech?: string | null
+          rt_registry?: string | null
+          sent_at?: string | null
           service_id?: string | null
+          signed_at?: string | null
           status?: string
           tech_id?: string | null
           validity_date?: string | null
@@ -335,7 +346,11 @@ export type Database = {
           content?: Json | null
           created_at?: string
           id?: string
+          responsible_tech?: string | null
+          rt_registry?: string | null
+          sent_at?: string | null
           service_id?: string | null
+          signed_at?: string | null
           status?: string
           tech_id?: string | null
           validity_date?: string | null

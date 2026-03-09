@@ -200,11 +200,41 @@ export function useUpdateWorkOrder() {
   return useMutation({
     mutationFn: async ({
       id,
-      ...updates
-    }: Partial<WorkOrder> & { id: string }) => {
+      products_used,
+      areas_treated,
+      target_pests,
+      tech_notes,
+      client_signature,
+      photos,
+      status,
+      started_at,
+      completed_at,
+    }: {
+      id: string;
+      products_used?: ProductUsed[];
+      areas_treated?: AreaTreated[];
+      target_pests?: string[];
+      tech_notes?: string;
+      client_signature?: string | null;
+      photos?: string[];
+      status?: string;
+      started_at?: string;
+      completed_at?: string;
+    }) => {
+      const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+      if (products_used !== undefined) updates.products_used = products_used as unknown as Json;
+      if (areas_treated !== undefined) updates.areas_treated = areas_treated as unknown as Json;
+      if (target_pests !== undefined) updates.target_pests = target_pests;
+      if (tech_notes !== undefined) updates.tech_notes = tech_notes;
+      if (client_signature !== undefined) updates.client_signature = client_signature;
+      if (photos !== undefined) updates.photos = photos;
+      if (status !== undefined) updates.status = status;
+      if (started_at !== undefined) updates.started_at = started_at;
+      if (completed_at !== undefined) updates.completed_at = completed_at;
+
       const { data, error } = await supabase
         .from("work_orders")
-        .update({ ...updates, updated_at: new Date().toISOString() })
+        .update(updates)
         .eq("id", id)
         .select()
         .single();

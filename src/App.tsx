@@ -16,6 +16,7 @@ import OrdemDetalhe from "./pages/OrdemDetalhe";
 import Laudos from "./pages/Laudos";
 import LaudoDetalhe from "./pages/LaudoDetalhe";
 import Clientes from "./pages/Clientes";
+import ClienteDetalhe from "./pages/ClienteDetalhe";
 import Estoque from "./pages/Estoque";
 import Recorrencias from "./pages/Recorrencias";
 import Configuracoes from "./pages/Configuracoes";

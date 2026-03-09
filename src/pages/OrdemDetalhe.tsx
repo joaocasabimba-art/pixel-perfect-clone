@@ -62,12 +62,36 @@ export default function OrdemDetalhe() {
   const isMobile = useIsMobile();
   const sigRef = useRef<SignatureCanvas>(null);
 
-  const { data: wo, isLoading } = useWorkOrder(id);
+  const { data: wo, isLoading, refetch: refetchWO } = useWorkOrder(id);
   const { data: products } = useProducts();
   const updateWO = useUpdateWorkOrder();
   const startWO = useStartWorkOrder();
   const completeWO = useCompleteWorkOrder();
   const updatePayment = useUpdateServicePayment();
+
+  // Report polling state
+  const [reportId, setReportId] = useState<string | null>(null);
+
+  // Poll for report when OS is done
+  useEffect(() => {
+    if (wo?.status !== "done" || !wo?.service_id) return;
+
+    const checkReport = async () => {
+      const { data } = await supabase
+        .from("reports")
+        .select("id, status")
+        .eq("service_id", wo.service_id)
+        .maybeSingle();
+
+      if (data?.id) {
+        setReportId(data.id);
+      }
+    };
+
+    checkReport();
+    const timer = setInterval(checkReport, 5000);
+    return () => clearInterval(timer);
+  }, [wo?.status, wo?.service_id]);
 
   // Form state
   const [productsUsed, setProductsUsed] = useState<ProductUsed[]>([]);

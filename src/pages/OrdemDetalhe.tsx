@@ -832,14 +832,21 @@ Qualquer dúvida, estamos à disposição! 😊`;
 
         {wo.status === "done" && (
           <>
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => navigate(`/laudos`)}
-              className="gap-2"
-            >
-              <FileText className="w-5 h-5" /> Ver Laudo
-            </Button>
+            {reportId ? (
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => navigate(`/laudos/${reportId}`)}
+                className="gap-2"
+              >
+                <FileText className="w-5 h-5" /> Ver Laudo
+              </Button>
+            ) : (
+              <Button variant="outline" size="lg" disabled className="gap-2">
+                <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                Gerando laudo...
+              </Button>
+            )}
             {wo.service?.client?.phone && (
               <Button size="lg" onClick={sendWhatsApp} className="gap-2">
                 <MessageCircle className="w-5 h-5" /> Enviar WhatsApp

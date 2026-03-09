@@ -222,15 +222,17 @@ export function useUpdateWorkOrder() {
       completed_at?: string;
     }) => {
       const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
-      if (products_used !== undefined) updates.products_used = products_used as unknown as Json;
-      if (areas_treated !== undefined) updates.areas_treated = areas_treated as unknown as Json;
-      if (target_pests !== undefined) updates.target_pests = target_pests;
-      if (tech_notes !== undefined) updates.tech_notes = tech_notes;
+      if (products_used !== undefined) updates.products_used = (products_used ?? []) as unknown as Json;
+      if (areas_treated !== undefined) updates.areas_treated = (areas_treated ?? []) as unknown as Json;
+      if (target_pests !== undefined) updates.target_pests = target_pests ?? [];
+      if (tech_notes !== undefined) updates.tech_notes = tech_notes || null;
       if (client_signature !== undefined) updates.client_signature = client_signature;
-      if (photos !== undefined) updates.photos = photos;
+      if (photos !== undefined) updates.photos = photos ?? [];
       if (status !== undefined) updates.status = status;
       if (started_at !== undefined) updates.started_at = started_at;
       if (completed_at !== undefined) updates.completed_at = completed_at;
+
+      console.log("[updateWO] payload:", updates, "id:", id);
 
       const { data, error } = await supabase
         .from("work_orders")

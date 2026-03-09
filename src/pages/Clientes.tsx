@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useClients } from "@/hooks/useClients";
 import { EmptyState } from "@/components/EmptyState";
+import { useNavigate } from "react-router-dom";
 
 function Avatar({ name }: { name: string }) {
   const initials = name.split(" ").map((n) => n[0]).join("").slice(0, 2);
@@ -16,6 +17,7 @@ function Avatar({ name }: { name: string }) {
 
 export default function Clientes() {
   const { data: clients, isLoading } = useClients();
+  const navigate = useNavigate();
 
   if (isLoading) {
     return (
@@ -39,7 +41,7 @@ export default function Clientes() {
       ) : (
         <div className="space-y-3">
           {clients.map((c: any) => (
-            <Card key={c.id} className="hover:shadow-md transition-shadow cursor-pointer">
+            <Card key={c.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/clientes/${c.id}`)}>
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
                   <Avatar name={c.name} />

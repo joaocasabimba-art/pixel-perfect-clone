@@ -317,8 +317,9 @@ export function useCompleteWorkOrder() {
       }
 
       // STEP 2 — Update service (only status + completed_at, NEVER payment fields)
+      // NOTE: services CHECK constraint requires 'completed', NOT 'done'
       const svcPayload = {
-        status: "done" as const,
+        status: "completed" as const,
         completed_at: now,
       };
       console.log("[completeWO] svc payload:", JSON.stringify(svcPayload), "service_id:", wo.service_id);

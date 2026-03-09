@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCompanyId } from "@/hooks/useCompanyId";
 import { useToast } from "@/hooks/use-toast";
 import { friendlyError } from "@/lib/errorHandler";
+import type { Json } from "@/integrations/supabase/types";
 
 export interface WorkOrder {
   id: string;
@@ -10,8 +11,8 @@ export interface WorkOrder {
   service_id: string;
   number: number;
   status: "open" | "in_progress" | "done" | "cancelled";
-  products_used: ProductUsed[];
-  areas_treated: AreaTreated[];
+  products_used: Json;
+  areas_treated: Json;
   target_pests: string[];
   tech_notes: string | null;
   client_signature: string | null;

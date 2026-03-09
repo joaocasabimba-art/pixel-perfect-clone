@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useClients } from "@/hooks/useClients";
 import { EmptyState } from "@/components/EmptyState";
+import { useNavigate } from "react-router-dom";
 
 function Avatar({ name }: { name: string }) {
   const initials = name.split(" ").map((n) => n[0]).join("").slice(0, 2);

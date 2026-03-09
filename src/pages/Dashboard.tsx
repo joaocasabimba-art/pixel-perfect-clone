@@ -44,7 +44,7 @@ export default function Dashboard() {
       ] = await Promise.all([
         supabase.from("leads").select("id", { count: "exact", head: true }).gte("created_at", todayStr + "T00:00:00"),
         supabase.from("services").select("id", { count: "exact", head: true }).eq("scheduled_date", todayStr),
-        supabase.from("services").select("value").gte("scheduled_date", monthStart).lte("scheduled_date", monthEnd).in("status", ["completed", "done"]),
+        supabase.from("services").select("value").gte("scheduled_date", monthStart).lte("scheduled_date", monthEnd).eq("status", "completed"),
         supabase.from("recurrences").select("id", { count: "exact", head: true }).lte("next_service_date", sevenDaysAhead),
         supabase.from("leads").select("id, name, phone, service_type").eq("status", "new").lt("created_at", twoDaysAgo),
         supabase.from("reports").select("id, client:clients(name)").eq("status", "draft"),

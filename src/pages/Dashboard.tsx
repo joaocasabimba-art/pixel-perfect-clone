@@ -14,6 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { formatCurrency, whatsappLink } from "@/lib/business";
 import { format, startOfMonth, endOfMonth, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { OnboardingChecklist } from "@/components/OnboardingChecklist";
 
 export default function Dashboard() {
   const companyId = useCompanyId();

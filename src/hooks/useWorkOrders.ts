@@ -222,17 +222,17 @@ export function useUpdateWorkOrder() {
       completed_at?: string;
     }) => {
       const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
-      if (products_used !== undefined) updates.products_used = (products_used ?? []) as unknown as Json;
-      if (areas_treated !== undefined) updates.areas_treated = (areas_treated ?? []) as unknown as Json;
-      if (target_pests !== undefined) updates.target_pests = target_pests ?? [];
+      if (products_used !== undefined) updates.products_used = (Array.isArray(products_used) ? products_used : []) as unknown as Json;
+      if (areas_treated !== undefined) updates.areas_treated = (Array.isArray(areas_treated) ? areas_treated : []) as unknown as Json;
+      if (target_pests !== undefined) updates.target_pests = Array.isArray(target_pests) ? target_pests : [];
       if (tech_notes !== undefined) updates.tech_notes = tech_notes || null;
-      if (client_signature !== undefined) updates.client_signature = client_signature;
-      if (photos !== undefined) updates.photos = photos ?? [];
+      if (client_signature !== undefined) updates.client_signature = client_signature || null;
+      if (photos !== undefined) updates.photos = Array.isArray(photos) ? photos : [];
       if (status !== undefined) updates.status = status;
       if (started_at !== undefined) updates.started_at = started_at;
       if (completed_at !== undefined) updates.completed_at = completed_at;
 
-      console.log("[updateWO] payload:", updates, "id:", id);
+      console.log("[updateWO] payload:", JSON.stringify(updates), "id:", id);
 
       const { data, error } = await supabase
         .from("work_orders")
@@ -298,59 +298,67 @@ export function useCompleteWorkOrder() {
     mutationFn: async (wo: WorkOrder) => {
       const now = new Date().toISOString();
 
-      const woPayload = { status: "done" as const, completed_at: now, updated_at: now };
-      const svcPayload = { status: "done" as const, completed_at: now };
+      // STEP 1 — Update work_order (only valid columns)
+      const woPayload = {
+        status: "done" as const,
+        completed_at: now,
+        updated_at: now,
+      };
+      console.log("[completeWO] wo payload:", JSON.stringify(woPayload), "wo.id:", wo.id);
 
-      console.log("[completeWO] wo payload:", woPayload, "wo.id:", wo.id);
-      console.log("[completeWO] service payload:", svcPayload, "service_id:", wo.service_id);
-
-      // Update work_order
       const { error: woError } = await supabase
         .from("work_orders")
         .update(woPayload)
         .eq("id", wo.id);
 
       if (woError) {
-        console.error("[completeWO] work_order error:", woError);
-        throw woError;
+        console.error("❌ ERRO work_orders:", JSON.stringify(woError));
+        throw new Error(`Erro OS: ${woError.message} | ${woError.details || ""}`);
       }
 
-      // Update service
+      // STEP 2 — Update service (only status + completed_at, NEVER payment fields)
+      const svcPayload = {
+        status: "done" as const,
+        completed_at: now,
+      };
+      console.log("[completeWO] svc payload:", JSON.stringify(svcPayload), "service_id:", wo.service_id);
+
       const { error: sError } = await supabase
         .from("services")
         .update(svcPayload)
         .eq("id", wo.service_id);
 
       if (sError) {
-        console.error("[completeWO] service error:", sError);
-        throw sError;
+        console.error("❌ ERRO services:", JSON.stringify(sError));
+        throw new Error(`Erro serviço: ${sError.message} | ${sError.details || ""}`);
       }
 
-      // Generate report with retry (up to 3 attempts)
+      // STEP 3 — Generate report with timeout (10s) + retry, never blocks completion
       let reportId: string | null = null;
-      for (let attempt = 1; attempt <= 3; attempt++) {
-        try {
-          console.log(`[generate-report] attempt ${attempt}`);
-          const { data: reportData, error: reportError } = await supabase.functions.invoke(
-            "generate-report",
-            { body: { service_id: wo.service_id, work_order_id: wo.id } }
-          );
+      try {
+        const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 10000));
 
-          if (reportError) {
-            console.error(`[generate-report] attempt ${attempt} error:`, reportError);
-            throw reportError;
+        const invokeReport = (async () => {
+          for (let attempt = 1; attempt <= 3; attempt++) {
+            try {
+              console.log(`[generate-report] attempt ${attempt}`);
+              const { data: reportData, error: reportError } = await supabase.functions.invoke(
+                "generate-report",
+                { body: { service_id: wo.service_id, work_order_id: wo.id } }
+              );
+              if (reportError) throw reportError;
+              if (reportData?.report_id) return reportData.report_id as string;
+            } catch (err) {
+              console.error(`[generate-report] attempt ${attempt} failed:`, err);
+              if (attempt < 3) await new Promise(r => setTimeout(r, 1000));
+            }
           }
+          return null;
+        })();
 
-          if (reportData?.report_id) {
-            reportId = reportData.report_id;
-            break;
-          }
-        } catch (err) {
-          console.error(`[generate-report] attempt ${attempt} failed:`, err);
-          if (attempt < 3) {
-            await new Promise(r => setTimeout(r, 1000));
-          }
-        }
+        reportId = await Promise.race([invokeReport, timeout]);
+      } catch (err) {
+        console.error("❌ generate-report error (non-blocking):", err);
       }
 
       return { wo_id: wo.id, report_id: reportId };
@@ -360,7 +368,11 @@ export function useCompleteWorkOrder() {
       qc.invalidateQueries({ queryKey: ["work_order", data.wo_id] });
       qc.invalidateQueries({ queryKey: ["services"] });
       qc.invalidateQueries({ queryKey: ["reports"] });
-      toast({ title: data.report_id ? "OS concluída! Laudo gerado." : "OS concluída! O laudo será gerado em breve." });
+      toast({
+        title: data.report_id
+          ? "OS concluída! Laudo gerado."
+          : "OS concluída! O laudo será gerado em breve.",
+      });
     },
     onError: (err: any) =>
       toast({ title: "Erro ao concluir OS", description: friendlyError(err), variant: "destructive" }),

@@ -87,8 +87,8 @@ export default function OrdemDetalhe() {
   // Initialize form from WO data
   useEffect(() => {
     if (wo) {
-      setProductsUsed((wo.products_used as ProductUsed[]) || []);
-      setAreasTreated((wo.areas_treated as AreaTreated[]) || []);
+      setProductsUsed((wo.products_used as unknown as ProductUsed[]) || []);
+      setAreasTreated((wo.areas_treated as unknown as AreaTreated[]) || []);
       setTargetPests(wo.target_pests || []);
       setTechNotes(wo.tech_notes || "");
       setSignature(wo.client_signature);

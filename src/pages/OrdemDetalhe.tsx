@@ -62,12 +62,36 @@ export default function OrdemDetalhe() {
   const isMobile = useIsMobile();
   const sigRef = useRef<SignatureCanvas>(null);
 
-  const { data: wo, isLoading } = useWorkOrder(id);
+  const { data: wo, isLoading, refetch: refetchWO } = useWorkOrder(id);
   const { data: products } = useProducts();
   const updateWO = useUpdateWorkOrder();
   const startWO = useStartWorkOrder();
   const completeWO = useCompleteWorkOrder();
   const updatePayment = useUpdateServicePayment();
+
+  // Report polling state
+  const [reportId, setReportId] = useState<string | null>(null);
+
+  // Poll for report when OS is done
+  useEffect(() => {
+    if (wo?.status !== "done" || !wo?.service_id) return;
+
+    const checkReport = async () => {
+      const { data } = await supabase
+        .from("reports")
+        .select("id, status")
+        .eq("service_id", wo.service_id)
+        .maybeSingle();
+
+      if (data?.id) {
+        setReportId(data.id);
+      }
+    };
+
+    checkReport();
+    const timer = setInterval(checkReport, 5000);
+    return () => clearInterval(timer);
+  }, [wo?.status, wo?.service_id]);
 
   // Form state
   const [productsUsed, setProductsUsed] = useState<ProductUsed[]>([]);
@@ -233,20 +257,23 @@ export default function OrdemDetalhe() {
       return;
     }
 
-    // Save final data first
+    // Save final data first — sanitize arrays
     await updateWO.mutateAsync({
       id: wo.id,
-      products_used: productsUsed as any,
-      areas_treated: areasTreated as any,
-      target_pests: targetPests,
-      tech_notes: techNotes,
+      products_used: productsUsed ?? [],
+      areas_treated: areasTreated ?? [],
+      target_pests: targetPests ?? [],
+      tech_notes: techNotes || null,
       client_signature: signature,
-      photos,
+      photos: photos ?? [],
     });
 
     const result = await completeWO.mutateAsync(wo);
     if (result.report_id) {
+      setReportId(result.report_id);
       navigate(`/laudos/${result.report_id}`);
+    } else {
+      toast({ title: "OS concluída! O laudo será gerado em breve." });
     }
   };
 
@@ -805,14 +832,21 @@ Qualquer dúvida, estamos à disposição! 😊`;
 
         {wo.status === "done" && (
           <>
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => navigate(`/laudos`)}
-              className="gap-2"
-            >
-              <FileText className="w-5 h-5" /> Ver Laudo
-            </Button>
+            {reportId ? (
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => navigate(`/laudos/${reportId}`)}
+                className="gap-2"
+              >
+                <FileText className="w-5 h-5" /> Ver Laudo
+              </Button>
+            ) : (
+              <Button variant="outline" size="lg" disabled className="gap-2">
+                <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                Gerando laudo...
+              </Button>
+            )}
             {wo.service?.client?.phone && (
               <Button size="lg" onClick={sendWhatsApp} className="gap-2">
                 <MessageCircle className="w-5 h-5" /> Enviar WhatsApp

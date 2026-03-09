@@ -222,15 +222,17 @@ export function useUpdateWorkOrder() {
       completed_at?: string;
     }) => {
       const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
-      if (products_used !== undefined) updates.products_used = products_used as unknown as Json;
-      if (areas_treated !== undefined) updates.areas_treated = areas_treated as unknown as Json;
-      if (target_pests !== undefined) updates.target_pests = target_pests;
-      if (tech_notes !== undefined) updates.tech_notes = tech_notes;
+      if (products_used !== undefined) updates.products_used = (products_used ?? []) as unknown as Json;
+      if (areas_treated !== undefined) updates.areas_treated = (areas_treated ?? []) as unknown as Json;
+      if (target_pests !== undefined) updates.target_pests = target_pests ?? [];
+      if (tech_notes !== undefined) updates.tech_notes = tech_notes || null;
       if (client_signature !== undefined) updates.client_signature = client_signature;
-      if (photos !== undefined) updates.photos = photos;
+      if (photos !== undefined) updates.photos = photos ?? [];
       if (status !== undefined) updates.status = status;
       if (started_at !== undefined) updates.started_at = started_at;
       if (completed_at !== undefined) updates.completed_at = completed_at;
+
+      console.log("[updateWO] payload:", updates, "id:", id);
 
       const { data, error } = await supabase
         .from("work_orders")
@@ -296,40 +298,69 @@ export function useCompleteWorkOrder() {
     mutationFn: async (wo: WorkOrder) => {
       const now = new Date().toISOString();
 
+      const woPayload = { status: "done" as const, completed_at: now, updated_at: now };
+      const svcPayload = { status: "done" as const, completed_at: now };
+
+      console.log("[completeWO] wo payload:", woPayload, "wo.id:", wo.id);
+      console.log("[completeWO] service payload:", svcPayload, "service_id:", wo.service_id);
+
       // Update work_order
       const { error: woError } = await supabase
         .from("work_orders")
-        .update({ status: "done", completed_at: now, updated_at: now })
+        .update(woPayload)
         .eq("id", wo.id);
 
-      if (woError) throw woError;
+      if (woError) {
+        console.error("[completeWO] work_order error:", woError);
+        throw woError;
+      }
 
       // Update service
       const { error: sError } = await supabase
         .from("services")
-        .update({ status: "done", completed_at: now })
+        .update(svcPayload)
         .eq("id", wo.service_id);
 
-      if (sError) throw sError;
-
-      // Generate report
-      const { data: reportData, error: reportError } = await supabase.functions.invoke(
-        "generate-report",
-        { body: { service_id: wo.service_id, work_order_id: wo.id } }
-      );
-
-      if (reportError) {
-        console.error("Report generation error:", reportError);
+      if (sError) {
+        console.error("[completeWO] service error:", sError);
+        throw sError;
       }
 
-      return { wo_id: wo.id, report_id: reportData?.report_id };
+      // Generate report with retry (up to 3 attempts)
+      let reportId: string | null = null;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          console.log(`[generate-report] attempt ${attempt}`);
+          const { data: reportData, error: reportError } = await supabase.functions.invoke(
+            "generate-report",
+            { body: { service_id: wo.service_id, work_order_id: wo.id } }
+          );
+
+          if (reportError) {
+            console.error(`[generate-report] attempt ${attempt} error:`, reportError);
+            throw reportError;
+          }
+
+          if (reportData?.report_id) {
+            reportId = reportData.report_id;
+            break;
+          }
+        } catch (err) {
+          console.error(`[generate-report] attempt ${attempt} failed:`, err);
+          if (attempt < 3) {
+            await new Promise(r => setTimeout(r, 1000));
+          }
+        }
+      }
+
+      return { wo_id: wo.id, report_id: reportId };
     },
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ["work_orders"] });
       qc.invalidateQueries({ queryKey: ["work_order", data.wo_id] });
       qc.invalidateQueries({ queryKey: ["services"] });
       qc.invalidateQueries({ queryKey: ["reports"] });
-      toast({ title: "OS concluída! Gerando laudo..." });
+      toast({ title: data.report_id ? "OS concluída! Laudo gerado." : "OS concluída! O laudo será gerado em breve." });
     },
     onError: (err: any) =>
       toast({ title: "Erro ao concluir OS", description: friendlyError(err), variant: "destructive" }),

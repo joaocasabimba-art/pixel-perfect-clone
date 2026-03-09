@@ -112,12 +112,44 @@ export default function Agenda() {
                         Téc: {item.tech.full_name}
                       </div>
                     )}
+                    </div>
+                    <Badge className={`${st.class} border-0 text-xs`}>
+                      {st.label}
+                    </Badge>
                   </div>
-                  <Badge className={`${st.class} border-0 text-xs`}>
-                    {st.label}
-                  </Badge>
+                  <div className="flex gap-2 mt-3">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1 text-xs"
+                      disabled={createWO.isPending}
+                      onClick={async () => {
+                        const result = await createWO.mutateAsync(item.id);
+                        if (result?.id) navigate(`/ordens/${result.id}`);
+                      }}
+                    >
+                      <ClipboardList className="w-3.5 h-3.5" /> Abrir OS
+                    </Button>
+                    {item.client?.phone && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="gap-1 text-xs"
+                        onClick={() =>
+                          window.open(
+                            whatsappLink(
+                              item.client.phone!,
+                              `Olá ${item.client.name}! Confirmando seu serviço de ${item.service_type}. 😊`
+                            ),
+                            "_blank"
+                          )
+                        }
+                      >
+                        <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
             );
           })}
         </div>

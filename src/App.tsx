@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import Leads from "./pages/Leads";
 import Agenda from "./pages/Agenda";
 import Ordens from "./pages/Ordens";
+import OrdemDetalhe from "./pages/OrdemDetalhe";
 import Laudos from "./pages/Laudos";
 import LaudoDetalhe from "./pages/LaudoDetalhe";
 import Clientes from "./pages/Clientes";

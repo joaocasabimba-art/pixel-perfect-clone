@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
-import { Clock, MapPin, User, Plus } from "lucide-react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { Clock, MapPin, User, Plus, ExternalLink, MessageCircle, ClipboardList } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
-import { Clock, MapPin, User, Plus } from "lucide-react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { Clock, MapPin, User, Plus, ExternalLink, MessageCircle, ClipboardList } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -9,6 +9,8 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { EmptyState } from "@/components/EmptyState";
 import { NewServiceModal } from "@/components/agenda/NewServiceModal";
+import { useCreateWorkOrder } from "@/hooks/useWorkOrders";
+import { whatsappLink } from "@/lib/business";
 
 const serviceColors: Record<string, string> = {
   "Dedetização": "border-l-primary-mid",
@@ -29,6 +31,8 @@ export default function Agenda() {
   const { data: services, isLoading } = useWeekServices();
   const [searchParams, setSearchParams] = useSearchParams();
   const [newServiceOpen, setNewServiceOpen] = useState(false);
+  const navigate = useNavigate();
+  const createWO = useCreateWorkOrder();
 
   const defaultClientId = searchParams.get("client_id") || undefined;
   const defaultLeadId = searchParams.get("lead_id") || undefined;
@@ -108,12 +112,44 @@ export default function Agenda() {
                         Téc: {item.tech.full_name}
                       </div>
                     )}
+                    </div>
+                    <Badge className={`${st.class} border-0 text-xs`}>
+                      {st.label}
+                    </Badge>
                   </div>
-                  <Badge className={`${st.class} border-0 text-xs`}>
-                    {st.label}
-                  </Badge>
+                  <div className="flex gap-2 mt-3">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1 text-xs"
+                      disabled={createWO.isPending}
+                      onClick={async () => {
+                        const result = await createWO.mutateAsync(item.id);
+                        if (result?.id) navigate(`/ordens/${result.id}`);
+                      }}
+                    >
+                      <ClipboardList className="w-3.5 h-3.5" /> Abrir OS
+                    </Button>
+                    {item.client?.phone && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="gap-1 text-xs"
+                        onClick={() =>
+                          window.open(
+                            whatsappLink(
+                              item.client.phone!,
+                              `Olá ${item.client.name}! Confirmando seu serviço de ${item.service_type}. 😊`
+                            ),
+                            "_blank"
+                          )
+                        }
+                      >
+                        <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
             );
           })}
         </div>

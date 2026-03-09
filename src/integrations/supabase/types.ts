@@ -377,14 +377,19 @@ export type Database = {
           assigned_to: string | null
           client_id: string | null
           company_id: string
+          completed_at: string | null
           created_at: string
           end_time: string | null
           id: string
           lead_id: string | null
           notes: string | null
+          paid_at: string | null
+          payment_method: string | null
+          payment_status: string | null
           scheduled_date: string | null
           service_type: string
           start_time: string | null
+          started_at: string | null
           status: string
           value: number | null
         }
@@ -393,14 +398,19 @@ export type Database = {
           assigned_to?: string | null
           client_id?: string | null
           company_id: string
+          completed_at?: string | null
           created_at?: string
           end_time?: string | null
           id?: string
           lead_id?: string | null
           notes?: string | null
+          paid_at?: string | null
+          payment_method?: string | null
+          payment_status?: string | null
           scheduled_date?: string | null
           service_type: string
           start_time?: string | null
+          started_at?: string | null
           status?: string
           value?: number | null
         }
@@ -409,14 +419,19 @@ export type Database = {
           assigned_to?: string | null
           client_id?: string | null
           company_id?: string
+          completed_at?: string | null
           created_at?: string
           end_time?: string | null
           id?: string
           lead_id?: string | null
           notes?: string | null
+          paid_at?: string | null
+          payment_method?: string | null
+          payment_status?: string | null
           scheduled_date?: string | null
           service_type?: string
           start_time?: string | null
+          started_at?: string | null
           status?: string
           value?: number | null
         }
@@ -447,6 +462,75 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      work_orders: {
+        Row: {
+          areas_treated: Json | null
+          client_signature: string | null
+          company_id: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          number: number
+          photos: string[] | null
+          products_used: Json | null
+          service_id: string
+          started_at: string | null
+          status: string
+          target_pests: string[] | null
+          tech_notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          areas_treated?: Json | null
+          client_signature?: string | null
+          company_id: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          number?: number
+          photos?: string[] | null
+          products_used?: Json | null
+          service_id: string
+          started_at?: string | null
+          status?: string
+          target_pests?: string[] | null
+          tech_notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          areas_treated?: Json | null
+          client_signature?: string | null
+          company_id?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          number?: number
+          photos?: string[] | null
+          products_used?: Json | null
+          service_id?: string
+          started_at?: string | null
+          status?: string
+          target_pests?: string[] | null
+          tech_notes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_orders_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_orders_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: true
+            referencedRelation: "services"
             referencedColumns: ["id"]
           },
         ]

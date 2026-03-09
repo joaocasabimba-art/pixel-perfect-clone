@@ -484,6 +484,64 @@ export type Database = {
           },
         ]
       }
+      stock_movements: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          product_id: string
+          qty: number
+          type: string
+          unit_cost: number | null
+          work_order_id: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          product_id: string
+          qty?: number
+          type?: string
+          unit_cost?: number | null
+          work_order_id?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          product_id?: string
+          qty?: number
+          type?: string
+          unit_cost?: number | null
+          work_order_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_movements_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_work_order_id_fkey"
+            columns: ["work_order_id"]
+            isOneToOne: false
+            referencedRelation: "work_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       work_orders: {
         Row: {
           areas_treated: Json | null

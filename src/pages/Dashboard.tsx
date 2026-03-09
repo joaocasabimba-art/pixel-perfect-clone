@@ -44,11 +44,10 @@ export default function Dashboard() {
       ] = await Promise.all([
         supabase.from("leads").select("id", { count: "exact", head: true }).gte("created_at", todayStr + "T00:00:00"),
         supabase.from("services").select("id", { count: "exact", head: true }).eq("scheduled_date", todayStr),
-        supabase.from("services").select("value").gte("scheduled_date", monthStart).lte("scheduled_date", monthEnd).eq("status", "completed"),
-        supabase.from("recurrences").select("id", { count: "exact", head: true }).lte("next_service_date", sevenDaysAhead),
+        supabase.from("services").select("value").gte("scheduled_date", monthStart).lte("scheduled_date", monthEnd).eq("status", "completed" supabase.from("recurrences").select("id", { count: "exact", head: true }).lte("next_service_date", sevenDaysAhead),
         supabase.from("leads").select("id, name, phone, service_type").eq("status", "new").lt("created_at", twoDaysAgo),
         supabase.from("reports").select("id, client:clients(name)").eq("status", "draft"),
-        supabase.from("services").select("id, value, client:clients(name, phone)").eq("status", "done").eq("payment_status", "pending").lt("completed_at", sevenDaysAgo),
+        supabase.from("services").select("id, value, client:clients(name, phone)").eq("status", "done").eq(completedment_status", "pending").lt("completed_at", sevenDaysAgo),
         supabase.from("services").select("*, client:clients(name), tech:profiles!services_assigned_to_fkey(full_name)").eq("scheduled_date", todayStr).order("start_time"),
       ]);
 

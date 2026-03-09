@@ -257,23 +257,26 @@ export default function OrdemDetalhe() {
       return;
     }
 
-    // Save final data first — sanitize arrays
+    // Save final data first — sanitize all arrays strictly
     await updateWO.mutateAsync({
       id: wo.id,
-      products_used: productsUsed ?? [],
-      areas_treated: areasTreated ?? [],
-      target_pests: targetPests ?? [],
+      products_used: Array.isArray(productsUsed) ? productsUsed : [],
+      areas_treated: Array.isArray(areasTreated) ? areasTreated : [],
+      target_pests: Array.isArray(targetPests) ? targetPests : [],
       tech_notes: techNotes || null,
-      client_signature: signature,
-      photos: photos ?? [],
+      client_signature: signature || null,
+      photos: Array.isArray(photos) ? photos : [],
     });
 
-    const result = await completeWO.mutateAsync(wo);
-    if (result.report_id) {
-      setReportId(result.report_id);
-      navigate(`/laudos/${result.report_id}`);
-    } else {
-      toast({ title: "OS concluída! O laudo será gerado em breve." });
+    try {
+      const result = await completeWO.mutateAsync(wo);
+      if (result.report_id) {
+        setReportId(result.report_id);
+        navigate(`/laudos/${result.report_id}`);
+      }
+      // If no report_id, polling will pick it up — toast already shown by hook
+    } catch {
+      // Error toast already shown by hook — don't re-throw
     }
   };
 

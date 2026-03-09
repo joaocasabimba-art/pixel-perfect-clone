@@ -31,6 +31,8 @@ export default function Agenda() {
   const { data: services, isLoading } = useWeekServices();
   const [searchParams, setSearchParams] = useSearchParams();
   const [newServiceOpen, setNewServiceOpen] = useState(false);
+  const navigate = useNavigate();
+  const createWO = useCreateWorkOrder();
 
   const defaultClientId = searchParams.get("client_id") || undefined;
   const defaultLeadId = searchParams.get("lead_id") || undefined;

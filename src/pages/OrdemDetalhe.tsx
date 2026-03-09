@@ -257,20 +257,23 @@ export default function OrdemDetalhe() {
       return;
     }
 
-    // Save final data first
+    // Save final data first — sanitize arrays
     await updateWO.mutateAsync({
       id: wo.id,
-      products_used: productsUsed as any,
-      areas_treated: areasTreated as any,
-      target_pests: targetPests,
-      tech_notes: techNotes,
+      products_used: productsUsed ?? [],
+      areas_treated: areasTreated ?? [],
+      target_pests: targetPests ?? [],
+      tech_notes: techNotes || null,
       client_signature: signature,
-      photos,
+      photos: photos ?? [],
     });
 
     const result = await completeWO.mutateAsync(wo);
     if (result.report_id) {
+      setReportId(result.report_id);
       navigate(`/laudos/${result.report_id}`);
+    } else {
+      toast({ title: "OS concluída! O laudo será gerado em breve." });
     }
   };
 

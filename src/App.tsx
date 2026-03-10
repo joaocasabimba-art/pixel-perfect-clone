@@ -15,6 +15,8 @@ import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 
 const Leads = lazy(() => import("./pages/Leads"));
+const Propostas = lazy(() => import("./pages/Propostas"));
+const PropostaEditor = lazy(() => import("./pages/PropostaEditor"));
 const Agenda = lazy(() => import("./pages/Agenda"));
 const Ordens = lazy(() => import("./pages/Ordens"));
 const OrdemDetalhe = lazy(() => import("./pages/OrdemDetalhe"));

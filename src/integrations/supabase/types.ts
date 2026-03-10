@@ -264,6 +264,88 @@ export type Database = {
           },
         ]
       }
+      proposals: {
+        Row: {
+          accepted_at: string | null
+          client_id: string | null
+          company_id: string
+          created_at: string
+          discount: number | null
+          id: string
+          items: Json
+          lead_id: string | null
+          notes: string | null
+          number: number
+          sent_at: string | null
+          status: string
+          title: string
+          total_value: number | null
+          updated_at: string
+          valid_until: string | null
+          viewed_at: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          client_id?: string | null
+          company_id: string
+          created_at?: string
+          discount?: number | null
+          id?: string
+          items?: Json
+          lead_id?: string | null
+          notes?: string | null
+          number?: number
+          sent_at?: string | null
+          status?: string
+          title: string
+          total_value?: number | null
+          updated_at?: string
+          valid_until?: string | null
+          viewed_at?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          client_id?: string | null
+          company_id?: string
+          created_at?: string
+          discount?: number | null
+          id?: string
+          items?: Json
+          lead_id?: string | null
+          notes?: string | null
+          number?: number
+          sent_at?: string | null
+          status?: string
+          title?: string
+          total_value?: number | null
+          updated_at?: string
+          valid_until?: string | null
+          viewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposals_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposals_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposals_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recurrences: {
         Row: {
           client_id: string
@@ -399,6 +481,7 @@ export type Database = {
           created_at: string
           end_time: string | null
           id: string
+          installments: Json | null
           lead_id: string | null
           notes: string | null
           paid_at: string | null
@@ -420,6 +503,7 @@ export type Database = {
           created_at?: string
           end_time?: string | null
           id?: string
+          installments?: Json | null
           lead_id?: string | null
           notes?: string | null
           paid_at?: string | null
@@ -441,6 +525,7 @@ export type Database = {
           created_at?: string
           end_time?: string | null
           id?: string
+          installments?: Json | null
           lead_id?: string | null
           notes?: string | null
           paid_at?: string | null
@@ -545,6 +630,7 @@ export type Database = {
       work_orders: {
         Row: {
           areas_treated: Json | null
+          attachments: Json | null
           client_signature: string | null
           company_id: string
           completed_at: string | null
@@ -562,6 +648,7 @@ export type Database = {
         }
         Insert: {
           areas_treated?: Json | null
+          attachments?: Json | null
           client_signature?: string | null
           company_id: string
           completed_at?: string | null
@@ -579,6 +666,7 @@ export type Database = {
         }
         Update: {
           areas_treated?: Json | null
+          attachments?: Json | null
           client_signature?: string | null
           company_id?: string
           completed_at?: string | null

@@ -15,6 +15,8 @@ import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 
 const Leads = lazy(() => import("./pages/Leads"));
+const Propostas = lazy(() => import("./pages/Propostas"));
+const PropostaEditor = lazy(() => import("./pages/PropostaEditor"));
 const Agenda = lazy(() => import("./pages/Agenda"));
 const Ordens = lazy(() => import("./pages/Ordens"));
 const OrdemDetalhe = lazy(() => import("./pages/OrdemDetalhe"));
@@ -54,6 +56,8 @@ const App = () => (
                 <Route element={<ProtectedLayout />}>
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/leads" element={<Leads />} />
+                  <Route path="/propostas" element={<Propostas />} />
+                  <Route path="/propostas/:id" element={<PropostaEditor />} />
                   <Route path="/agenda" element={<Agenda />} />
                   <Route path="/ordens" element={<Ordens />} />
                   <Route path="/ordens/:id" element={<OrdemDetalhe />} />

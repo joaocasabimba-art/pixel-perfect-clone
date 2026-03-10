@@ -12,7 +12,7 @@ export function useServices() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("services")
-        .select("*, client:clients(name), tech:profiles!services_assigned_to_fkey(full_name)")
+        .select("*, client:clients(name, phone), tech:profiles!services_assigned_to_fkey(full_name)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -31,9 +31,28 @@ export function useWeekServices() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("services")
-        .select("*, client:clients(name), tech:profiles!services_assigned_to_fkey(full_name)")
+        .select("*, client:clients(name, phone), tech:profiles!services_assigned_to_fkey(full_name)")
         .gte("scheduled_date", weekStart)
         .lte("scheduled_date", weekEnd)
+        .order("scheduled_date")
+        .order("start_time");
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!companyId,
+  });
+}
+
+export function useCalendarServices(startDate: string, endDate: string) {
+  const companyId = useCompanyId();
+  return useQuery({
+    queryKey: ["calendar-services", startDate, endDate],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("services")
+        .select("*, client:clients(name, phone), tech:profiles!services_assigned_to_fkey(full_name)")
+        .gte("scheduled_date", startDate)
+        .lte("scheduled_date", endDate)
         .order("scheduled_date")
         .order("start_time");
       if (error) throw error;
@@ -60,6 +79,7 @@ export function useCreateService() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["services"] });
       qc.invalidateQueries({ queryKey: ["agenda"] });
+      qc.invalidateQueries({ queryKey: ["calendar-services"] });
       toast({ title: "Serviço criado com sucesso!" });
     },
     onError: (err: any) =>

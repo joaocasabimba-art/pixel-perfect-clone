@@ -17,6 +17,7 @@ export interface WorkOrder {
   tech_notes: string | null;
   client_signature: string | null;
   photos: string[];
+  attachments?: any[];
   started_at: string | null;
   completed_at: string | null;
   created_at: string;
@@ -33,6 +34,7 @@ export interface WorkOrder {
     started_at: string | null;
     completed_at: string | null;
     address: string | null;
+    installments?: any[];
     client?: {
       id: string;
       name: string;
@@ -74,17 +76,9 @@ export function useWorkOrders(filters?: { status?: string; techId?: string; sear
         .select(`
           *,
           service:services (
-            id,
-            service_type,
-            scheduled_date,
-            start_time,
-            value,
-            payment_status,
-            payment_method,
-            paid_at,
-            started_at,
-            completed_at,
-            address,
+            id, service_type, scheduled_date, start_time, value,
+            payment_status, payment_method, paid_at, started_at, completed_at,
+            address, installments,
             client:clients (id, name, phone, address, city, state),
             tech:profiles!services_assigned_to_fkey (id, full_name, phone)
           )
@@ -94,7 +88,6 @@ export function useWorkOrders(filters?: { status?: string; techId?: string; sear
       if (filters?.status && filters.status !== "all") {
         query = query.eq("status", filters.status);
       }
-
       if (filters?.techId) {
         query = query.eq("service.assigned_to", filters.techId);
       }
@@ -102,7 +95,6 @@ export function useWorkOrders(filters?: { status?: string; techId?: string; sear
       const { data, error } = await query;
       if (error) throw error;
 
-      // Client-side search filter
       let results = data as WorkOrder[];
       if (filters?.search) {
         const s = filters.search.toLowerCase();
@@ -112,7 +104,6 @@ export function useWorkOrders(filters?: { status?: string; techId?: string; sear
             String(wo.number).padStart(4, "0").includes(s)
         );
       }
-
       return results;
     },
     enabled: !!companyId,
@@ -128,19 +119,10 @@ export function useWorkOrder(id: string | undefined) {
         .select(`
           *,
           service:services (
-            id,
-            service_type,
-            scheduled_date,
-            start_time,
-            value,
-            payment_status,
-            payment_method,
-            paid_at,
-            started_at,
-            completed_at,
-            address,
-            notes,
-            client:clients (id, name, phone, address, city, state, email),
+            id, service_type, scheduled_date, start_time, value,
+            payment_status, payment_method, paid_at, started_at, completed_at,
+            address, notes, installments,
+            client:clients (id, name, phone, address, city, state, email, document),
             tech:profiles!services_assigned_to_fkey (id, full_name, phone)
           )
         `)
@@ -160,7 +142,6 @@ export function useCreateWorkOrder() {
 
   return useMutation({
     mutationFn: async (serviceId: string) => {
-      // Check if WO already exists
       const { data: existing } = await supabase
         .from("work_orders")
         .select("id")
@@ -199,16 +180,8 @@ export function useUpdateWorkOrder() {
 
   return useMutation({
     mutationFn: async ({
-      id,
-      products_used,
-      areas_treated,
-      target_pests,
-      tech_notes,
-      client_signature,
-      photos,
-      status,
-      started_at,
-      completed_at,
+      id, products_used, areas_treated, target_pests, tech_notes,
+      client_signature, photos, status, started_at, completed_at,
     }: {
       id: string;
       products_used?: ProductUsed[];
@@ -231,8 +204,6 @@ export function useUpdateWorkOrder() {
       if (status !== undefined) updates.status = status;
       if (started_at !== undefined) updates.started_at = started_at;
       if (completed_at !== undefined) updates.completed_at = completed_at;
-
-      console.log("[updateWO] payload:", JSON.stringify(updates), "id:", id);
 
       const { data, error } = await supabase
         .from("work_orders")
@@ -260,21 +231,16 @@ export function useStartWorkOrder() {
   return useMutation({
     mutationFn: async (wo: WorkOrder) => {
       const now = new Date().toISOString();
-
-      // Update work_order
       const { error: woError } = await supabase
         .from("work_orders")
         .update({ status: "in_progress", started_at: now, updated_at: now })
         .eq("id", wo.id);
-
       if (woError) throw woError;
 
-      // Update service
       const { error: sError } = await supabase
         .from("services")
         .update({ status: "in_progress", started_at: now })
         .eq("id", wo.service_id);
-
       if (sError) throw sError;
 
       return { wo_id: wo.id };
@@ -298,82 +264,29 @@ export function useCompleteWorkOrder() {
     mutationFn: async (wo: WorkOrder) => {
       const now = new Date().toISOString();
 
-      // STEP 1 — Update work_order (only valid columns)
-      const woPayload = {
-        status: "done" as const,
-        completed_at: now,
-        updated_at: now,
-      };
-      console.log("[completeWO] wo payload:", JSON.stringify(woPayload), "wo.id:", wo.id);
-
+      // Update work_order
       const { error: woError } = await supabase
         .from("work_orders")
-        .update(woPayload)
+        .update({ status: "done", completed_at: now, updated_at: now })
         .eq("id", wo.id);
 
-      if (woError) {
-        console.error("❌ ERRO work_orders:", JSON.stringify(woError));
-        throw new Error(`Erro OS: ${woError.message} | ${woError.details || ""}`);
-      }
+      if (woError) throw new Error(`Erro OS: ${woError.message}`);
 
-      // STEP 2 — Update service (only status + completed_at, NEVER payment fields)
-      // NOTE: services CHECK constraint requires 'completed', NOT 'done'
-      const svcPayload = {
-        status: "completed" as const,
-        completed_at: now,
-      };
-      console.log("[completeWO] svc payload:", JSON.stringify(svcPayload), "service_id:", wo.service_id);
-
+      // Update service (uses 'completed' status per CHECK constraint)
       const { error: sError } = await supabase
         .from("services")
-        .update(svcPayload)
+        .update({ status: "completed", completed_at: now })
         .eq("id", wo.service_id);
 
-      if (sError) {
-        console.error("❌ ERRO services:", JSON.stringify(sError));
-        throw new Error(`Erro serviço: ${sError.message} | ${sError.details || ""}`);
-      }
+      if (sError) throw new Error(`Erro serviço: ${sError.message}`);
 
-      // STEP 3 — Generate report with timeout (10s) + retry, never blocks completion
-      let reportId: string | null = null;
-      try {
-        const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 10000));
-
-        const invokeReport = (async () => {
-          for (let attempt = 1; attempt <= 3; attempt++) {
-            try {
-              console.log(`[generate-report] attempt ${attempt}`);
-              const { data: reportData, error: reportError } = await supabase.functions.invoke(
-                "generate-report",
-                { body: { service_id: wo.service_id, work_order_id: wo.id } }
-              );
-              if (reportError) throw reportError;
-              if (reportData?.report_id) return reportData.report_id as string;
-            } catch (err) {
-              console.error(`[generate-report] attempt ${attempt} failed:`, err);
-              if (attempt < 3) await new Promise(r => setTimeout(r, 1000));
-            }
-          }
-          return null;
-        })();
-
-        reportId = await Promise.race([invokeReport, timeout]);
-      } catch (err) {
-        console.error("❌ generate-report error (non-blocking):", err);
-      }
-
-      return { wo_id: wo.id, report_id: reportId };
+      return { wo_id: wo.id };
     },
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ["work_orders"] });
       qc.invalidateQueries({ queryKey: ["work_order", data.wo_id] });
       qc.invalidateQueries({ queryKey: ["services"] });
-      qc.invalidateQueries({ queryKey: ["reports"] });
-      toast({
-        title: data.report_id
-          ? "OS concluída! Laudo gerado."
-          : "OS concluída! O laudo será gerado em breve.",
-      });
+      toast({ title: "OS concluída!" });
     },
     onError: (err: any) =>
       toast({ title: "Erro ao concluir OS", description: friendlyError(err), variant: "destructive" }),
@@ -386,10 +299,7 @@ export function useUpdateServicePayment() {
 
   return useMutation({
     mutationFn: async ({
-      serviceId,
-      payment_status,
-      payment_method,
-      paid_at,
+      serviceId, payment_status, payment_method, paid_at,
     }: {
       serviceId: string;
       payment_status: string;
@@ -400,7 +310,6 @@ export function useUpdateServicePayment() {
         .from("services")
         .update({ payment_status, payment_method, paid_at })
         .eq("id", serviceId);
-
       if (error) throw error;
     },
     onSuccess: () => {

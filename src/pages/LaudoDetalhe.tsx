@@ -50,7 +50,6 @@ export default function LaudoDetalhe() {
     enabled: !!id,
   });
 
-  // Fetch company info for RT defaults
   const { data: company } = useQuery({
     queryKey: ["my-company"],
     queryFn: async () => {
@@ -61,7 +60,6 @@ export default function LaudoDetalhe() {
     },
   });
 
-  // Prefill RT fields
   useEffect(() => {
     if (company) {
       setRtName(company.responsible_tech || "");
@@ -69,7 +67,6 @@ export default function LaudoDetalhe() {
     }
   }, [company]);
 
-  // Signed URL for PDF
   const pdfPath = report?.content?.pdf_path;
   const { data: signedUrl } = useQuery({
     queryKey: ["report-url", id, pdfPath],
@@ -82,20 +79,19 @@ export default function LaudoDetalhe() {
     enabled: !!pdfPath,
   });
 
-  // Polling while PDF is generating
+  // Polling while PDF is generating (max 30s)
   useEffect(() => {
     if (report && !report.content?.pdf_path) {
       const timer = setInterval(() => refetch(), 3000);
-      return () => clearInterval(timer);
+      const timeout = setTimeout(() => clearInterval(timer), 30000);
+      return () => { clearInterval(timer); clearTimeout(timeout); };
     }
   }, [report, refetch]);
 
-  // Sign mutation
   const signMutation = useMutation({
     mutationFn: async () => {
       const sig = sigRef.current?.toDataURL();
       if (!sig) throw new Error("Assine antes de confirmar");
-
       const { error } = await supabase
         .from("reports")
         .update({
@@ -117,7 +113,23 @@ export default function LaudoDetalhe() {
       toast({ title: "Erro ao assinar", description: friendlyError(err), variant: "destructive" }),
   });
 
-  // WhatsApp send
+  // Direct download
+  const handleDownload = async () => {
+    if (!pdfPath) return;
+    const { data, error } = await supabase.storage.from("reports").download(pdfPath);
+    if (error || !data) {
+      toast({ title: "Erro ao baixar", variant: "destructive" });
+      return;
+    }
+    const url = URL.createObjectURL(data);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `laudo-${id?.slice(0, 8)}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // WhatsApp send with signed URL
   const handleWhatsApp = async () => {
     const phone = report?.client?.phone;
     if (!phone) {
@@ -127,7 +139,7 @@ export default function LaudoDetalhe() {
 
     let pdfUrl = signedUrl;
     if (!pdfUrl && pdfPath) {
-      const { data } = await supabase.storage.from("reports").createSignedUrl(pdfPath, 3600);
+      const { data } = await supabase.storage.from("reports").createSignedUrl(pdfPath, 86400);
       pdfUrl = data?.signedUrl;
     }
 
@@ -135,7 +147,6 @@ export default function LaudoDetalhe() {
 
     window.open(whatsappLink(phone, msg), "_blank");
 
-    // Mark as sent
     await supabase
       .from("reports")
       .update({ status: "sent", sent_at: new Date().toISOString() } as any)
@@ -196,9 +207,9 @@ export default function LaudoDetalhe() {
             </Button>
           )}
 
-          {signedUrl && (
-            <Button size="sm" variant="outline" onClick={() => window.open(signedUrl, "_blank")}>
-              <Download className="w-4 h-4 mr-2" /> Baixar
+          {pdfPath && (
+            <Button size="sm" variant="outline" onClick={handleDownload}>
+              <Download className="w-4 h-4 mr-2" /> Baixar PDF
             </Button>
           )}
         </div>
@@ -236,19 +247,10 @@ export default function LaudoDetalhe() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Assinatura</label>
-              <SignatureCanvas
-                ref={sigRef}
-                canvasProps={{ className: "w-full h-32 border rounded-lg bg-white" }}
-              />
-              <Button variant="outline" size="sm" onClick={() => sigRef.current?.clear()}>
-                Limpar
-              </Button>
+              <SignatureCanvas ref={sigRef} canvasProps={{ className: "w-full h-32 border rounded-lg bg-white" }} />
+              <Button variant="outline" size="sm" onClick={() => sigRef.current?.clear()}>Limpar</Button>
             </div>
-            <Button
-              className="w-full"
-              onClick={() => signMutation.mutate()}
-              disabled={signMutation.isPending}
-            >
+            <Button className="w-full" onClick={() => signMutation.mutate()} disabled={signMutation.isPending}>
               {signMutation.isPending ? "Assinando..." : "Confirmar assinatura"}
             </Button>
           </div>

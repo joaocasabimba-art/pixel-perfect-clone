@@ -56,16 +56,17 @@ function fmtDate(d: string) {
 }
 
 function buildLaudoHTML(wo: any, service: any, client: any, company: any): string {
+  const e = escapeHtml;
   const logoUrl = company.settings?.logo_url;
   const validUntil = calcValidUntil(service?.service_type);
 
   return `
     <div style="margin-bottom:24px;display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #1565C0;padding-bottom:16px">
       <div>
-        ${logoUrl ? `<img src="${logoUrl}" style="height:50px;margin-bottom:8px" crossorigin="anonymous"/>` : ''}
-        <div style="font-size:16pt;font-weight:bold;color:#1565C0">${company.name || ''}</div>
+        ${logoUrl ? `<img src="${e(logoUrl)}" style="height:50px;margin-bottom:8px" crossorigin="anonymous"/>` : ''}
+        <div style="font-size:16pt;font-weight:bold;color:#1565C0">${e(company.name)}</div>
         <div style="font-size:9pt;color:#666">
-          ${company.cnpj ? `CNPJ: ${company.cnpj}` : ''}${company.phone ? ` · ${company.phone}` : ''}
+          ${company.cnpj ? `CNPJ: ${e(company.cnpj)}` : ''}${company.phone ? ` · ${e(company.phone)}` : ''}
         </div>
       </div>
       <div style="text-align:right;font-size:14pt;font-weight:bold;color:#1565C0">
@@ -81,11 +82,11 @@ function buildLaudoHTML(wo: any, service: any, client: any, company: any): strin
       <div style="font-weight:bold;color:#1565C0;border-bottom:1px solid #ddd;padding-bottom:4px;margin-bottom:8px">DADOS DO CLIENTE</div>
       <table style="width:100%;border-collapse:collapse">
         <tr>
-          <td style="padding:4px 8px;width:50%"><small style="color:#888">Nome / Razão Social</small><br/>${client?.name || '—'}</td>
-          <td style="padding:4px 8px"><small style="color:#888">CPF / CNPJ</small><br/>${client?.document || '—'}</td>
+          <td style="padding:4px 8px;width:50%"><small style="color:#888">Nome / Razão Social</small><br/>${e(client?.name || '—')}</td>
+          <td style="padding:4px 8px"><small style="color:#888">CPF / CNPJ</small><br/>${e(client?.document || '—')}</td>
         </tr>
         <tr>
-          <td colspan="2" style="padding:4px 8px"><small style="color:#888">Endereço</small><br/>${[client?.address, client?.city, client?.state].filter(Boolean).join(', ') || service?.address || '—'}</td>
+          <td colspan="2" style="padding:4px 8px"><small style="color:#888">Endereço</small><br/>${e([client?.address, client?.city, client?.state].filter(Boolean).join(', ') || service?.address || '—')}</td>
         </tr>
       </table>
     </div>
@@ -94,18 +95,18 @@ function buildLaudoHTML(wo: any, service: any, client: any, company: any): strin
       <div style="font-weight:bold;color:#1565C0;border-bottom:1px solid #ddd;padding-bottom:4px;margin-bottom:8px">DADOS DO SERVIÇO</div>
       <table style="width:100%;border-collapse:collapse">
         <tr>
-          <td style="padding:4px 8px;width:50%"><small style="color:#888">Tipo de Serviço</small><br/>${service?.service_type || '—'}</td>
+          <td style="padding:4px 8px;width:50%"><small style="color:#888">Tipo de Serviço</small><br/>${e(service?.service_type || '—')}</td>
           <td style="padding:4px 8px"><small style="color:#888">Data de Execução</small><br/>${service?.completed_at ? fmtDate(service.completed_at) : fmtDate(new Date().toISOString())}</td>
         </tr>
         <tr>
-          <td style="padding:4px 8px"><small style="color:#888">Responsável Técnico</small><br/>${company.responsible_tech || company.settings?.responsible_tech || '—'}</td>
-          <td style="padding:4px 8px"><small style="color:#888">CRQ / CREA</small><br/>${company.crq_crea || company.settings?.rt_registry || '—'}</td>
+          <td style="padding:4px 8px"><small style="color:#888">Responsável Técnico</small><br/>${e(company.responsible_tech || company.settings?.responsible_tech || '—')}</td>
+          <td style="padding:4px 8px"><small style="color:#888">CRQ / CREA</small><br/>${e(company.crq_crea || company.settings?.rt_registry || '—')}</td>
         </tr>
       </table>
       ${(wo.target_pests?.length) ? `
         <div style="margin-top:8px;padding:4px 8px">
           <small style="color:#888">Pragas Controladas</small><br/>
-          ${wo.target_pests.map((p: string) => `<span style="display:inline-block;background:#E3F0FB;color:#1565C0;padding:2px 8px;border-radius:12px;margin:2px;font-size:10pt">${p}</span>`).join('')}
+          ${wo.target_pests.map((p: string) => `<span style="display:inline-block;background:#E3F0FB;color:#1565C0;padding:2px 8px;border-radius:12px;margin:2px;font-size:10pt">${e(p)}</span>`).join('')}
         </div>
       ` : ''}
     </div>
@@ -120,9 +121,9 @@ function buildLaudoHTML(wo: any, service: any, client: any, company: any): strin
           <th style="padding:6px;text-align:center;border:1px solid #ddd">Dose</th>
         </tr></thead>
         <tbody>${wo.products_used.map((p: any) => `<tr>
-          <td style="padding:6px;border:1px solid #ddd">${p.name || '—'}</td>
-          <td style="padding:6px;text-align:center;border:1px solid #ddd">${p.qty || '—'} ${p.unit || ''}</td>
-          <td style="padding:6px;text-align:center;border:1px solid #ddd">${p.dose || '—'}</td>
+          <td style="padding:6px;border:1px solid #ddd">${e(p.name || '—')}</td>
+          <td style="padding:6px;text-align:center;border:1px solid #ddd">${e(p.qty || '—')} ${e(p.unit || '')}</td>
+          <td style="padding:6px;text-align:center;border:1px solid #ddd">${e(p.dose || '—')}</td>
         </tr>`).join('')}</tbody>
       </table>
     </div>
@@ -138,9 +139,9 @@ function buildLaudoHTML(wo: any, service: any, client: any, company: any): strin
           <th style="padding:6px;text-align:center;border:1px solid #ddd">Método</th>
         </tr></thead>
         <tbody>${wo.areas_treated.map((a: any) => `<tr>
-          <td style="padding:6px;border:1px solid #ddd">${a.area || '—'}</td>
-          <td style="padding:6px;text-align:center;border:1px solid #ddd">${a.sqm || '—'}</td>
-          <td style="padding:6px;text-align:center;border:1px solid #ddd">${a.method || '—'}</td>
+          <td style="padding:6px;border:1px solid #ddd">${e(a.area || '—')}</td>
+          <td style="padding:6px;text-align:center;border:1px solid #ddd">${e(a.sqm || '—')}</td>
+          <td style="padding:6px;text-align:center;border:1px solid #ddd">${e(a.method || '—')}</td>
         </tr>`).join('')}</tbody>
       </table>
     </div>
@@ -149,7 +150,7 @@ function buildLaudoHTML(wo: any, service: any, client: any, company: any): strin
     ${wo.tech_notes ? `
     <div style="margin-bottom:20px">
       <div style="font-weight:bold;color:#1565C0;border-bottom:1px solid #ddd;padding-bottom:4px;margin-bottom:8px">OBSERVAÇÕES</div>
-      <p style="white-space:pre-wrap">${wo.tech_notes}</p>
+      <p style="white-space:pre-wrap">${e(wo.tech_notes)}</p>
     </div>
     ` : ''}
 
@@ -160,13 +161,13 @@ function buildLaudoHTML(wo: any, service: any, client: any, company: any): strin
     <div style="display:flex;justify-content:space-around;margin-top:40px;padding-top:20px">
       <div style="text-align:center;width:40%">
         <div style="border-top:1px solid #333;padding-top:8px;margin-top:60px">
-          ${company.responsible_tech || company.settings?.responsible_tech || 'Responsável Técnico'}
+          ${e(company.responsible_tech || company.settings?.responsible_tech || 'Responsável Técnico')}
         </div>
-        <div style="font-size:9pt;color:#888">${company.crq_crea || company.settings?.rt_registry ? `CRQ/CREA: ${company.crq_crea || company.settings?.rt_registry}` : ''}</div>
+        <div style="font-size:9pt;color:#888">${company.crq_crea || company.settings?.rt_registry ? `CRQ/CREA: ${e(company.crq_crea || company.settings?.rt_registry)}` : ''}</div>
       </div>
       <div style="text-align:center;width:40%">
         <div style="border-top:1px solid #333;padding-top:8px;margin-top:60px">
-          ${client?.name || 'Cliente'}
+          ${e(client?.name || 'Cliente')}
         </div>
         <div style="font-size:9pt;color:#888">Assinatura do cliente</div>
       </div>

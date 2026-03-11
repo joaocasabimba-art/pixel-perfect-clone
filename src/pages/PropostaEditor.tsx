@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { escapeHtml } from "@/lib/sanitize";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Save, Send, Check, X, Plus, Trash2, Copy, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";

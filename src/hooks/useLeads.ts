@@ -8,7 +8,7 @@ import type { Lead, LeadStatus } from "@/lib/types";
 export function useLeads() {
   const companyId = useCompanyId();
   return useQuery({
-    queryKey: ["leads"],
+    queryKey: ["leads", companyId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("leads")

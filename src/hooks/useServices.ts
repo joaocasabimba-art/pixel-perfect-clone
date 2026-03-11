@@ -8,7 +8,7 @@ import { format, startOfWeek, endOfWeek } from "date-fns";
 export function useServices() {
   const companyId = useCompanyId();
   return useQuery({
-    queryKey: ["services"],
+    queryKey: ["services", companyId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("services")
@@ -27,7 +27,7 @@ export function useWeekServices() {
   const weekStart = format(startOfWeek(today, { weekStartsOn: 1 }), "yyyy-MM-dd");
   const weekEnd = format(endOfWeek(today, { weekStartsOn: 1 }), "yyyy-MM-dd");
   return useQuery({
-    queryKey: ["agenda", weekStart],
+    queryKey: ["agenda", companyId, weekStart],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("services")
@@ -46,7 +46,7 @@ export function useWeekServices() {
 export function useCalendarServices(startDate: string, endDate: string) {
   const companyId = useCompanyId();
   return useQuery({
-    queryKey: ["calendar-services", startDate, endDate],
+    queryKey: ["calendar-services", companyId, startDate, endDate],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("services")
@@ -80,6 +80,7 @@ export function useCreateService() {
       qc.invalidateQueries({ queryKey: ["services"] });
       qc.invalidateQueries({ queryKey: ["agenda"] });
       qc.invalidateQueries({ queryKey: ["calendar-services"] });
+      qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
       toast({ title: "Serviço criado com sucesso!" });
     },
     onError: (err: any) =>

@@ -12,6 +12,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Bug,
+  RotateCcw,
+  Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +25,8 @@ const navItems = [
   { icon: ClipboardList, label: "Ordens", path: "/ordens" },
   { icon: FileText, label: "Laudos", path: "/laudos" },
   { icon: Users, label: "Clientes", path: "/clientes" },
+  { icon: RotateCcw, label: "Recorrências", path: "/recorrencias" },
+  { icon: Wallet, label: "Financeiro", path: "/financeiro" },
   { icon: Package, label: "Estoque", path: "/estoque" },
   { icon: Settings, label: "Config", path: "/configuracoes" },
 ];

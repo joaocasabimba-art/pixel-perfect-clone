@@ -26,10 +26,18 @@ const Clientes = lazy(() => import("./pages/Clientes"));
 const ClienteDetalhe = lazy(() => import("./pages/ClienteDetalhe"));
 const Estoque = lazy(() => import("./pages/Estoque"));
 const Recorrencias = lazy(() => import("./pages/Recorrencias"));
+const Financeiro = lazy(() => import("./pages/Financeiro"));
 const Configuracoes = lazy(() => import("./pages/Configuracoes"));
 const Mais = lazy(() => import("./pages/Mais"));
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 30_000,
+    },
+  },
+});
 
 function ProtectedLayout() {
   return (
@@ -67,6 +75,7 @@ const App = () => (
                   <Route path="/clientes/:id" element={<ClienteDetalhe />} />
                   <Route path="/estoque" element={<Estoque />} />
                   <Route path="/recorrencias" element={<Recorrencias />} />
+                  <Route path="/financeiro" element={<Financeiro />} />
                   <Route path="/configuracoes" element={<Configuracoes />} />
                   <Route path="/mais" element={<Mais />} />
                 </Route>

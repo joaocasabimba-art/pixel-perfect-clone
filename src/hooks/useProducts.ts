@@ -7,7 +7,7 @@ import { friendlyError } from "@/lib/errorHandler";
 export function useProducts() {
   const companyId = useCompanyId();
   return useQuery({
-    queryKey: ["products"],
+    queryKey: ["products", companyId],
     queryFn: async () => {
       const { data, error } = await supabase.from("products").select("*").order("name");
       if (error) throw error;

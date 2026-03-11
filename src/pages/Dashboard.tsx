@@ -30,7 +30,7 @@ export default function Dashboard() {
   const sevenDaysAhead = format(new Date(Date.now() + 7 * 86400000), "yyyy-MM-dd");
 
   const { data: stats, isLoading } = useQuery({
-    queryKey: ["dashboard-stats"],
+    queryKey: ["dashboard-stats", companyId],
     queryFn: async () => {
       const [
         leadsToday,

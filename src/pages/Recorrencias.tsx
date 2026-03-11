@@ -46,7 +46,7 @@ export default function Recorrencias() {
   });
 
   const { data, isLoading } = useQuery({
-    queryKey: ["recurrences"],
+    queryKey: ["recurrences", companyId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("recurrences")
@@ -216,7 +216,7 @@ export default function Recorrencias() {
                     <TableCell>{r.next_service_date ? formatDateBR(r.next_service_date) : "—"}</TableCell>
                     <TableCell>
                       {urgency && (
-                        <Badge variant={urgency.color === "destructive" ? "destructive" : "outline"} className="text-xs">
+                        <Badge variant={urgency.color === "destructive" ? "destructive" : "outline"} className={`text-xs${urgency.color === "warning" ? " border-amber-500 text-amber-700" : ""}`}>
                           {urgency.label}
                         </Badge>
                       )}
@@ -247,7 +247,7 @@ export default function Recorrencias() {
                   <div className="flex items-center justify-between mb-2">
                     <p className="font-semibold text-foreground">{r.client?.name || "—"}</p>
                     {urgency && (
-                      <Badge variant={urgency.color === "destructive" ? "destructive" : "outline"} className="text-xs">
+                      <Badge variant={urgency.color === "destructive" ? "destructive" : "outline"} className={`text-xs${urgency.color === "warning" ? " border-amber-500 text-amber-700" : ""}`}>
                         {urgency.label}
                       </Badge>
                     )}

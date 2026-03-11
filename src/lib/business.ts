@@ -40,6 +40,8 @@ export const formatCurrency = (value: number) =>
   `R$ ${value.toFixed(2).replace('.', ',')}`
 
 export const formatDateBR = (date: string | Date) => {
-  const d = typeof date === 'string' ? new Date(date) : date
+  const d = typeof date === 'string'
+    ? new Date(date.length === 10 ? `${date}T12:00:00` : date)
+    : date
   return d.toLocaleDateString('pt-BR')
 }

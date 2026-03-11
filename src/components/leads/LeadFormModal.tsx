@@ -29,6 +29,7 @@ import { ChevronDown, Loader2 } from "lucide-react";
 import { formatPhone } from "@/lib/business";
 import { useCreateLead } from "@/hooks/useLeads";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useServiceCatalog } from "@/hooks/useServiceCatalog";
 
 const leadSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
@@ -54,15 +55,6 @@ const leadSchema = z.object({
 type LeadFormData = z.infer<typeof leadSchema>;
 
 const origins = ["WhatsApp", "Instagram", "Google", "Indicação", "Panfleto", "Outro"];
-const serviceTypes = [
-  "Dedetização",
-  "Desratização",
-  "Descupinização",
-  "Limpeza de caixa d'água",
-  "Sanitização",
-  "Desentupimento",
-  "Outro",
-];
 
 interface Props {
   open: boolean;
@@ -72,6 +64,7 @@ interface Props {
 export function LeadFormModal({ open, onOpenChange }: Props) {
   const isMobile = useIsMobile();
   const createLead = useCreateLead();
+  const { serviceNames } = useServiceCatalog();
   const [addressOpen, setAddressOpen] = useState(false);
 
   const {
@@ -231,7 +224,7 @@ export function LeadFormModal({ open, onOpenChange }: Props) {
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>
               <SelectContent>
-                {serviceTypes.map((s) => (
+                {serviceNames.map((s) => (
                   <SelectItem key={s} value={s}>
                     {s}
                   </SelectItem>

@@ -25,6 +25,7 @@ import { Loader2, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCreateService } from "@/hooks/useServices";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useServiceCatalog } from "@/hooks/useServiceCatalog";
 
 const serviceSchema = z.object({
   clientId: z.string().min(1, "Selecione um cliente"),
@@ -39,23 +40,7 @@ const serviceSchema = z.object({
 
 type ServiceFormData = z.infer<typeof serviceSchema>;
 
-const serviceTypes = [
-  "Dedetização",
-  "Desratização",
-  "Descupinização",
-  "Limpeza de caixa d'água",
-  "Sanitização",
-  "Desentupimento",
-  "Outro",
-];
 
-const recurrenceDefaults: Record<string, number> = {
-  "Limpeza de caixa d'água": 180,
-  Dedetização: 90,
-  Desratização: 90,
-  Descupinização: 365,
-  Sanitização: 30,
-};
 
 interface Props {
   open: boolean;
@@ -72,6 +57,7 @@ export function NewServiceModal({
 }: Props) {
   const isMobile = useIsMobile();
   const createService = useCreateService();
+  const { options: catalogOptions } = useServiceCatalog();
   const [clientSearch, setClientSearch] = useState("");
   const [clients, setClients] = useState<any[]>([]);
   const [techs, setTechs] = useState<any[]>([]);
@@ -108,10 +94,11 @@ export function NewServiceModal({
   }, [defaultClientId, setValue]);
 
   useEffect(() => {
-    if (selectedType && recurrenceDefaults[selectedType]) {
-      setRecurrenceDays(recurrenceDefaults[selectedType]);
+    if (selectedType) {
+      const catalogEntry = catalogOptions.find((o) => o.value === selectedType);
+      if (catalogEntry?.recurrenceDays) setRecurrenceDays(catalogEntry.recurrenceDays);
     }
-  }, [selectedType]);
+  }, [selectedType, catalogOptions]);
 
   // Load technicians
   useEffect(() => {
@@ -222,9 +209,9 @@ export function NewServiceModal({
               <SelectValue placeholder="Selecione" />
             </SelectTrigger>
             <SelectContent>
-              {serviceTypes.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {s}
+              {catalogOptions.map((s) => (
+                <SelectItem key={s.value} value={s.value}>
+                  {s.label}
                 </SelectItem>
               ))}
             </SelectContent>

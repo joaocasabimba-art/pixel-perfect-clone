@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { supabase } from '@/integrations/supabase/client';
+import { escapeHtml } from '@/lib/sanitize';
 
 interface ReportInput {
   wo: {

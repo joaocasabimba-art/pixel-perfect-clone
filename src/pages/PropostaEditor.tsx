@@ -178,7 +178,7 @@ export default function PropostaEditor() {
   };
 
   const buildPreviewHTML = () => {
-    const logoUrl = company?.settings?.logo_url;
+    const logoUrl = (company?.settings as any)?.logo_url;
     return `
       <div style="margin-bottom:24px;display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #1565C0;padding-bottom:16px">
         <div>

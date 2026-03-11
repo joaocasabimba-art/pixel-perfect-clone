@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { escapeHtml } from "@/lib/sanitize";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Save, Send, Check, X, Plus, Trash2, Copy, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -178,13 +179,14 @@ export default function PropostaEditor() {
   };
 
   const buildPreviewHTML = () => {
+    const e = escapeHtml;
     const logoUrl = (company?.settings as any)?.logo_url;
     return `
       <div style="margin-bottom:24px;display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #1565C0;padding-bottom:16px">
         <div>
-          ${logoUrl ? `<img src="${logoUrl}" style="height:45px;margin-bottom:8px" crossorigin="anonymous"/>` : ""}
-          <div style="font-size:14pt;font-weight:bold;color:#1565C0">${company?.name || ""}</div>
-          <div style="font-size:9pt;color:#666">${company?.cnpj ? `CNPJ: ${company.cnpj}` : ""} ${company?.phone ? `· ${company.phone}` : ""}</div>
+          ${logoUrl ? `<img src="${e(logoUrl)}" style="height:45px;margin-bottom:8px" crossorigin="anonymous"/>` : ""}
+          <div style="font-size:14pt;font-weight:bold;color:#1565C0">${e(company?.name)}</div>
+          <div style="font-size:9pt;color:#666">${company?.cnpj ? `CNPJ: ${e(company.cnpj)}` : ""} ${company?.phone ? `· ${e(company.phone)}` : ""}</div>
         </div>
         <div style="text-align:right">
           <div style="font-size:12pt;font-weight:bold;color:#1565C0">PROPOSTA COMERCIAL</div>
@@ -192,7 +194,7 @@ export default function PropostaEditor() {
         </div>
       </div>
       <div style="display:flex;justify-content:space-between;margin-bottom:16px;font-size:10pt">
-        <div><strong>PARA:</strong> ${selectedClient?.name || "—"}</div>
+        <div><strong>PARA:</strong> ${e(selectedClient?.name || "—")}</div>
         <div><strong>DATA:</strong> ${formatDateBR(new Date())} ${validUntil ? `<strong>VALIDADE:</strong> ${validUntil.split("-").reverse().join("/")}` : ""}</div>
       </div>
       ${items.length > 0 ? `
@@ -205,9 +207,9 @@ export default function PropostaEditor() {
           <th style="padding:8px;text-align:right;width:100px">Total</th>
         </tr></thead>
         <tbody>${items.map((i) => `<tr style="border:1px solid #ddd">
-          <td style="padding:8px">${i.description || "—"}</td>
-          <td style="padding:8px;text-align:center">${i.quantity}</td>
-          <td style="padding:8px;text-align:center">${i.unit}</td>
+          <td style="padding:8px">${e(i.description || "—")}</td>
+          <td style="padding:8px;text-align:center">${e(i.quantity)}</td>
+          <td style="padding:8px;text-align:center">${e(i.unit)}</td>
           <td style="padding:8px;text-align:right">${formatCurrency(i.unit_price)}</td>
           <td style="padding:8px;text-align:right">${formatCurrency(i.total)}</td>
         </tr>`).join("")}</tbody>
@@ -216,7 +218,7 @@ export default function PropostaEditor() {
         ${discount > 0 ? `<p style="font-size:10pt">Subtotal: ${formatCurrency(subtotal)}</p><p style="font-size:10pt;color:#c00">Desconto: -${formatCurrency(discount)}</p>` : ""}
         <p style="font-size:14pt;font-weight:bold;color:#1565C0">TOTAL: ${formatCurrency(total)}</p>
       </div>
-      ${notes ? `<div style="border-top:1px solid #ddd;padding-top:12px;font-size:10pt"><strong>Observações:</strong><p style="white-space:pre-wrap;color:#444">${notes}</p></div>` : ""}
+      ${notes ? `<div style="border-top:1px solid #ddd;padding-top:12px;font-size:10pt"><strong>Observações:</strong><p style="white-space:pre-wrap;color:#444">${e(notes)}</p></div>` : ""}
       <div style="text-align:center;margin-top:30px;font-size:8pt;color:#999;border-top:1px solid #eee;padding-top:8px">Proposta emitida via PragaZero</div>
     `;
   };
